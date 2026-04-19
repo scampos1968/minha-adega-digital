@@ -1,0 +1,6 @@
+{
+  "name": "Adega Pessoal",
+  "description": "App de gerenciamento de adega de vinhos e destilados com integração IA para sommelier e busca por voz.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["AI Sommelier", "Voice Search", "Inventory Management"]
+}
