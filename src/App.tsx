@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Wine, Spirit, Adega, Consumption, SpiritConsumption } from './types';
 import { sbGet, sbUpsert, sbPatch, sbDel, wineFromDB, spiritFromDB, consumptionFromDB, spiritConsumptionFromDB, consumptionToDB, spiritConsumptionToDB, sbLogin } from './lib/supabase';
-import { LogIn, User, Wine as WineIcon, History, RefreshCw, Plus, Mic, Package, Trash2, BookOpen, GlassWater, Settings, X, Search, LogOut, Database, Camera, Star, ArrowLeft } from 'lucide-react';
+import { LogIn, User, Wine as WineIcon, History, RefreshCw, Plus, Mic, Package, Trash2, BookOpen, GlassWater, Settings, X, Search, LogOut, Database, Camera, Star, ArrowLeft, LayoutGrid } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { InventoryGrid } from './components/InventoryGrid';
 import { generateExpertSummaryGemini } from './lib/ai';
@@ -319,6 +319,27 @@ export default function App() {
     }
   }
 
+  async function handleSaveExpertSummary(id: string, summary: string) {
+    if (!isAdmin) return;
+    setSyncStatus('saving');
+    try {
+      const isSpirit = mode === 'spirits';
+      const table = isSpirit ? 'spirits' : 'wines';
+      await sbPatch(table, id, { expert_summary: summary });
+      
+      if (isSpirit) {
+        setSpirits(prev => prev.map(s => s.id === id ? { ...s, expertSummary: summary } : s));
+      } else {
+        setWines(prev => prev.map(w => w.id === id ? { ...w, expertSummary: summary } : w));
+      }
+      setSyncStatus('ok');
+    } catch (e) {
+      console.error(e);
+      setSyncStatus('error');
+      throw e;
+    }
+  }
+
   async function handleUpdateScore(item: Wine | Spirit, newScore: number) {
     if (!isAdmin) return;
     setSyncStatus('saving');
@@ -377,7 +398,7 @@ export default function App() {
         onInout={() => setActiveModal('inout')}
       />
       
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-8 md:px-8">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 pt-1 pb-8 md:px-8">
         <AnimatePresence mode="wait">
           {view === 'cellar' ? (
             <motion.div 
@@ -385,7 +406,7 @@ export default function App() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
-              className="space-y-6"
+              className="space-y-1"
             >
               <AdegaTabs 
                 adegas={adegas} 
@@ -454,6 +475,7 @@ export default function App() {
             mode={mode} 
             onClose={() => setActiveModal(null)} 
             onSaveNotes={handleSavePersonalNotes}
+            onSaveExpertSummary={handleSaveExpertSummary}
             onUpdateScore={handleUpdateScore}
             isAdmin={isAdmin}
           />
@@ -495,6 +517,7 @@ export default function App() {
             mode={mode} 
             allItems={mode === 'wines' ? wines : spirits}
             adegas={adegas}
+            isAdmin={isAdmin}
             onClose={() => setActiveModal(null)}
             onRefresh={boot}
           />
@@ -510,9 +533,9 @@ export default function App() {
       </AnimatePresence>
 
       {/* Background Decor */}
-      <div className="fixed inset-0 pointer-events-none -z-10 opacity-[0.05] overflow-hidden">
-         <div className="absolute -top-24 -left-24 w-96 h-96 bg-indigo-600 rounded-full blur-[100px]" />
-         <div className="absolute top-1/2 -right-48 w-[500px] h-[500px] bg-indigo-400 rounded-full blur-[120px]" />
+      <div className="fixed inset-0 pointer-events-none -z-10 opacity-[0.03] overflow-hidden">
+         <div className="absolute -top-24 -left-24 w-96 h-96 bg-brand-wine rounded-full blur-[100px]" />
+         <div className="absolute top-1/2 -right-48 w-[500px] h-[500px] bg-brand-gold rounded-full blur-[120px]" />
       </div>
     </div>
   );
@@ -688,31 +711,36 @@ function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, 
             </button>
           </div>
           
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <h1 className="italic text-[17px] sm:text-[19px] text-text-main font-serif leading-none tracking-tight">Adega</h1>
+          <div className="flex flex-col relative">
+            <button 
+              onClick={onRefresh}
+              className="flex items-center gap-1.5 focus:outline-none group relative pl-0.5"
+            >
+              <div className="absolute -left-1.5 -top-1 w-10 h-10 flex items-center justify-center pointer-events-none">
+                <RefreshCw 
+                  size={28} 
+                  className={`text-brand-wine transition-all ${syncStatus === 'saving' ? 'animate-spin opacity-30' : 'opacity-0'}`} 
+                />
+              </div>
+              <h1 className="italic text-[17px] sm:text-[19px] text-text-main font-serif leading-none tracking-tight relative z-10">Adega</h1>
               {isAdmin && (
-                <span className="text-[7px] bg-[#2c1810] text-[#f0e8d0] px-1 py-0.5 rounded font-bold uppercase tracking-widest leading-none hidden xs:inline-block">Admin</span>
+                <span className="text-[7px] bg-[#2c1810] text-[#f0e8d0] px-1 py-0.5 rounded font-bold uppercase tracking-widest leading-none hidden xs:inline-block relative z-10">Admin</span>
               )}
-            </div>
+            </button>
             <div className={`flex items-center gap-1 text-[9px] font-medium font-sans mt-0.5 ${syncStatus === 'saving' ? 'text-brand-gold' : syncStatus === 'error' ? 'text-red-800' : 'text-emerald-600'}`}>
               <div className={`w-1 h-1 rounded-full ${syncStatus === 'saving' ? 'animate-pulse bg-brand-gold' : 'bg-current'}`} />
-              <span className="opacity-70">{syncStatus === 'saving' ? 'Sync…' : 'Sincronizado'}</span>
+              <span className="opacity-70">{syncStatus === 'saving' ? 'Sync…' : 'Sync'}</span>
             </div>
           </div>
         </div>
 
         <nav className="flex items-center gap-0.5 sm:gap-1">
-          <button onClick={onRefresh} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Atualizar">
-            <RefreshCw size={16} className={syncStatus === 'saving' ? 'animate-spin' : ''} />
-          </button>
-          
           <button 
             onClick={() => setView(view === 'cellar' ? 'history' : 'cellar')} 
             className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors"
-            title={view === 'cellar' ? 'Histórico' : 'Adega'}
+            title={view === 'cellar' ? 'Histórico' : 'Voltar para Adega'}
           >
-            <History size={16} />
+            {view === 'cellar' ? <History size={16} /> : <LayoutGrid size={16} />}
           </button>
           
           {isAdmin && (
@@ -734,7 +762,7 @@ function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, 
           {isAdmin && (
             <button 
               onClick={onAdd}
-              className="p-1.5 sm:p-2 text-brand-wine hover:bg-brand-wine/5 rounded-full transition-colors"
+              className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-brand-wine text-white rounded-full hover:opacity-90 active:scale-95 transition-all shadow-sm"
               title="Adicionar item"
             >
               <Plus size={18} />
@@ -766,7 +794,7 @@ function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }
   const allAdegas = [{ id: 'all', name: 'Todas', emoji: '🏢' }, ...adegas];
   
   return (
-    <div className="flex flex-wrap gap-2.5 sm:gap-4 pb-4 md:mx-0 md:px-0">
+    <div className="flex flex-wrap gap-2.5 sm:gap-4 pb-1 md:mx-0 md:px-0">
       {allAdegas.map((a) => {
         const count = mode === 'wines' 
           ? (a.id === 'all' ? wines.reduce((acc: any, w: any) => acc + w.qty, 0) : wines.filter((w: any) => w.adegaId === a.id).reduce((acc: any, w: any) => acc + w.qty, 0))
@@ -776,7 +804,7 @@ function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }
           <button
             key={a.id}
             onClick={() => onChange(a.id)}
-            className={`flex items-center gap-2.5 py-2 px-3 sm:px-4 rounded-[12px] border transition-all duration-200 whitespace-nowrap shadow-sm font-sans text-[13px] sm:text-[14px] ${
+            className={`flex items-center gap-2.5 py-1 px-3 sm:px-4 rounded-[12px] border transition-all duration-200 whitespace-nowrap shadow-sm font-sans text-[13px] sm:text-[14px] ${
               activeId === a.id 
                 ? 'bg-brand-wine text-white border-brand-wine shadow-md ring-2 ring-brand-wine/10' 
                 : 'bg-white text-text-sub border-black/5 hover:border-black/10'
@@ -793,7 +821,7 @@ function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }
       {isAdmin && (
         <button 
           onClick={() => {}} // Placeholder or proper add adega action
-          className="flex items-center gap-2 py-2 px-3 sm:px-4 rounded-[12px] border border-dashed border-parchment text-text-muted hover:border-brand-wine hover:text-brand-wine transition-all text-xs font-medium shrink-0 font-sans shadow-sm bg-white/50"
+          className="flex items-center gap-2 py-1 px-3 sm:px-4 rounded-[12px] border border-dashed border-parchment text-text-muted hover:border-brand-wine hover:text-brand-wine transition-all text-xs font-medium shrink-0 font-sans shadow-sm bg-white/50"
         >
           <Plus size={14} />
           <span>Nova</span>

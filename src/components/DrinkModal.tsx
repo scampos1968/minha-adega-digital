@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Wine, Spirit, Consumption, SpiritConsumption } from '../types';
 import { ModalShell } from './ModalShell';
-import { Star, MessageSquareCode, GlassWater, Sparkles } from 'lucide-react';
+import { Star, MessageSquareCode, GlassWater, Sparkles, Check, X, Calendar } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface DrinkModalProps {
@@ -15,11 +15,10 @@ interface DrinkModalProps {
 export function DrinkModal({ item, mode, isAdmin, onClose, onSave }: DrinkModalProps) {
   const isWine = mode === 'wines';
   const wine = item as Wine;
-  const spirit = item as Spirit;
-
+  
   // For wines that aren't Porto/Sobremesa, it's always full bottle (qty - 1)
   // For Porto/Sobremesa and Spirits, it's a level change
-  const isPartial = !isWine || ['Porto', 'Sobremesa'].includes(wine.type);
+  const isPartial = !isWine || ['Porto', 'Sobremesa', 'Laranja'].includes(wine.type);
   
   const [level, setLevel] = useState(item.level ?? 100);
   const [score, setScore] = useState(item.score || 0);
@@ -30,7 +29,7 @@ export function DrinkModal({ item, mode, isAdmin, onClose, onSave }: DrinkModalP
 
   async function handleSave() {
     if (!isAdmin) {
-      if (password !== 'membeca') {
+      if (password.toLowerCase().trim() !== 'membeca') {
         alert('Senha de degustação incorreta.');
         return;
       }
@@ -61,132 +60,150 @@ export function DrinkModal({ item, mode, isAdmin, onClose, onSave }: DrinkModalP
     <ModalShell 
       title={`Degustar: ${item.name}`} 
       onClose={onClose}
-      icon={<GlassWater size={20} className="text-indigo-600" />}
+      icon={<GlassWater size={22} className="text-brand-wine" />}
       footer={
         <>
           <button 
             onClick={onClose}
-            className="flex-1 py-3 px-6 bg-white border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-all font-sans"
+            className="flex-1 py-4 bg-white border border-black/10 rounded-2xl text-[15px] font-sans font-medium text-text-sub hover:bg-cream-dark active:scale-[0.98] transition-all"
           >
-            Cancelar
+            Fechar
           </button>
           <button 
             onClick={handleSave}
             disabled={loading}
-            className="flex-1 py-3 px-6 bg-indigo-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-md active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 font-sans"
+            className="flex-1 py-4 bg-brand-wine text-white rounded-2xl text-[15px] font-sans font-medium flex items-center justify-center gap-2 hover:opacity-95 active:scale-[0.98] transition-all disabled:opacity-50 shadow-md"
           >
-            {loading ? <Sparkles className="animate-pulse" size={14} /> : 'Registrar'}
+            {loading ? <RefreshCw className="animate-spin" size={18} /> : <Check size={18} />}
+            <span>Registrar</span>
           </button>
         </>
       }
     >
-      <div className="space-y-8">
-        {/* Level Control if partial */}
+      <div className="space-y-7 py-2">
+        {/* Level Control */}
         {isPartial && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-end">
-              <label className="text-sm font-bold text-slate-500 uppercase tracking-wider">Nível Restante</label>
-              <span className="text-2xl font-bold text-indigo-600">{level}%</span>
+          <div className="bg-white/60 border border-black/5 rounded-3xl p-6 shadow-sm">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-brand-gold" />
+                <span className="text-[13px] font-bold text-text-muted uppercase tracking-wider">Nível Restante</span>
+              </div>
+              <span className="text-2xl font-serif italic text-brand-wine">{level}%</span>
             </div>
-            <div className="relative h-12 flex items-center">
+            <div className="relative pt-2 pb-6">
               <input 
                 type="range" 
                 min="0" 
                 max={item.level || 100} 
                 value={level} 
                 onChange={(e) => setLevel(parseInt(e.target.value))}
-                className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                className="w-full h-1.5 bg-cream-deep rounded-full appearance-none cursor-pointer accent-brand-wine"
               />
-              <div className="absolute top-0 left-0 h-full w-full pointer-events-none flex justify-between px-1">
-                <div className="w-[1px] h-3 bg-slate-200 mt-1" />
-                <div className="w-[1px] h-3 bg-slate-200 mt-1" />
-                <div className="w-[1px] h-3 bg-slate-200 mt-1" />
-                <div className="w-[1px] h-3 bg-slate-200 mt-1" />
-                <div className="w-[1px] h-3 bg-slate-200 mt-1" />
+              <div className="flex justify-between mt-3 px-1">
+                {[0, 25, 50, 75, 100].map(p => (
+                  <div key={p} className="flex flex-col items-center">
+                    <div className="w-[1px] h-2 bg-black/10" />
+                    <span className="text-[9px] text-text-muted font-bold mt-1">{p}%</span>
+                  </div>
+                ))}
               </div>
             </div>
-            <p className="text-[10px] text-slate-400 flex items-center gap-1.5 font-medium">
-              <Sparkles size={10} />
-              O nível atual da garrafa é {item.level || 100}%. Deslize para registrar quanto restou.
+            <p className="text-[11px] text-text-sub leading-relaxed italic opacity-80">
+              O nível atual é {item.level || 100}%. Arraste o seletor para registrar quanto restou na garrafa.
             </p>
           </div>
         )}
 
-        {/* Score */}
-        <div className="space-y-4">
-          <label className="text-sm font-bold text-slate-500 uppercase tracking-wider">Sua Avaliação</label>
-          <div className="flex gap-2">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <button
-                key={s}
-                onClick={() => setScore(s)}
-                className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-all ${
-                  score >= s 
-                    ? 'bg-amber-500 border-amber-500 text-white shadow-md scale-105' 
-                    : 'bg-white border-slate-200 text-slate-400 hover:border-amber-400/40'
-                }`}
-              >
-                <Star size={20} fill={score >= s ? 'currentColor' : 'none'} />
-              </button>
-            ))}
+        {/* Score & Occasion */}
+        <div className="grid sm:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <label className="text-[11px] font-bold text-text-muted uppercase tracking-widest ml-1">Sua Avaliação</label>
+            <div className="flex gap-1.5 justify-between">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setScore(s)}
+                  className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${
+                    score >= s ? 'text-brand-gold scale-110 drop-shadow-sm' : 'text-cream-deep hover:text-brand-gold/40'
+                  }`}
+                >
+                  <Star size={24} fill={score >= s ? 'currentColor' : 'none'} strokeWidth={1.5} />
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Occasion */}
-        <div className="space-y-3">
-          <label className="text-sm font-bold text-slate-500 uppercase tracking-wider">Ocasião</label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {['Jantar', 'Degustação', 'Presente', 'Festa'].map(occ => (
-              <button
-                key={occ}
-                onClick={() => setOccasion(occ)}
-                className={`py-2 px-3 rounded-lg text-xs font-bold border transition-all ${
-                  occasion === occ 
-                    ? 'bg-indigo-600 border-indigo-600 text-white' 
-                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                {occ}
-              </button>
-            ))}
+          <div className="space-y-4">
+            <label className="text-[11px] font-bold text-text-muted uppercase tracking-widest ml-1">Ocasião</label>
+            <div className="flex flex-wrap gap-2">
+              {['Jantar', 'Degustação', 'Vila', 'Presente'].map(occ => (
+                <button
+                  key={occ}
+                  onClick={() => setOccasion(occ)}
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all ${
+                    occasion === occ 
+                      ? 'bg-brand-gold text-white border-brand-gold shadow-sm' 
+                      : 'bg-white border-black/5 text-text-sub hover:bg-cream-dark'
+                  }`}
+                >
+                  {occ}
+                </button>
+              ))}
+            </div>
+            <div className="relative">
+              <input 
+                type="text" 
+                placeholder="Ou digite..." 
+                value={occasion}
+                onChange={(e) => setOccasion(e.target.value)}
+                className="w-full bg-white border border-black/10 rounded-xl py-2.5 px-4 text-[13px] focus:outline-none focus:border-brand-wine/20 transition-all font-sans italic"
+              />
+            </div>
           </div>
-          <input 
-            type="text" 
-            placeholder="Ou digite outra ocasião..." 
-            value={occasion}
-            onChange={(e) => setOccasion(e.target.value)}
-            className="w-full bg-white border border-slate-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
-          />
         </div>
 
         {/* Notes */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-slate-500">
-            <MessageSquareCode size={16} />
-            <label className="text-sm font-bold uppercase tracking-wider">Notas de Degustação</label>
+          <label className="text-[11px] font-bold text-text-muted uppercase tracking-widest ml-1">Notas de Degustação</label>
+          <div className="relative">
+            <textarea 
+              rows={3} 
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Descreva os aromas, taninos, finalização..."
+              className="w-full bg-white border border-black/10 rounded-2xl py-4 px-5 text-[14px] leading-relaxed focus:outline-none focus:border-brand-wine/20 transition-all resize-none shadow-inner italic font-serif"
+            />
+            <MessageSquareCode size={14} className="absolute top-4 right-4 text-brand-wine/30" />
           </div>
-          <textarea 
-            rows={4} 
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Descreva as sensações, aromas e com que harmonizou..."
-            className="w-full bg-white border border-slate-200 rounded-xl py-4 px-5 text-sm focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all resize-none"
-          />
         </div>
 
         {!isAdmin && (
-          <div className="space-y-3 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 ml-1">Código de Autorização</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Digite o código da casa"
-              className="w-full bg-white border border-indigo-200 rounded-xl py-3 px-4 text-center font-mono tracking-widest outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500"
-            />
+          <div className="p-5 bg-brand-wine/5 rounded-3xl border border-brand-wine/10 mt-4">
+            <p className="text-[10px] font-bold uppercase tracking-[2px] text-brand-wine text-center mb-3 opacity-60">Status de Visitante</p>
+            <div className="flex flex-col items-center gap-3">
+              <input 
+                type="password" 
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Código de Autorização"
+                className="w-full max-w-[200px] bg-white border border-brand-wine/20 rounded-xl py-2.5 px-4 text-center font-mono tracking-[4px] outline-none text-sm placeholder:tracking-normal placeholder:font-sans placeholder:text-[11px]"
+              />
+            </div>
           </div>
         )}
       </div>
     </ModalShell>
+  );
+}
+
+function RefreshCw({ className, size }: any) {
+  return (
+    <motion.div
+      animate={{ rotate: 360 }}
+      transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+    >
+      <GlassWater size={size} className={className} />
+    </motion.div>
   );
 }
