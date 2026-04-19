@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Wine, Spirit, Adega, Consumption, SpiritConsumption } from './types';
 import { sbGet, sbUpsert, sbPatch, wineFromDB, spiritFromDB, consumptionFromDB, spiritConsumptionFromDB, consumptionToDB, spiritConsumptionToDB, sbLogin } from './lib/supabase';
-import { LogIn, User, Wine as WineIcon, History, RefreshCw, Plus, Mic, Package, Trash2, BookOpen, GlassWater, Settings, X, Search, LogOut } from 'lucide-react';
+import { LogIn, User, Wine as WineIcon, History, RefreshCw, Plus, Mic, Package, Trash2, BookOpen, GlassWater, Settings, X, Search, LogOut, Database } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { InventoryGrid } from './components/InventoryGrid';
 import { generateExpertSummaryGemini } from './lib/ai';
 import { DrinkModal } from './components/DrinkModal';
 import { VoiceModal } from './components/VoiceModal';
 import { ConsumptionCard } from './components/ConsumptionCard';
+import { StockModal } from './components/StockModal';
+import { InOutModal } from './components/InOutModal';
 import { ItemModal } from './components/ItemModal';
 import { wineToDB, spiritToDB } from './lib/supabase';
 
@@ -26,8 +28,10 @@ export default function App() {
 
   const [activeAdega, setActiveAdega] = useState<string>('all');
   
+  const [groupBy, setGroupBy] = useState<string>('none');
+  
   // Modal state
-  const [activeModal, setActiveModal] = useState<'expert' | 'drink' | 'edit' | 'stock' | null>(null);
+  const [activeModal, setActiveModal] = useState<'expert' | 'drink' | 'edit' | 'stock' | 'voice' | 'inout' | null>(null);
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
   useEffect(() => {
@@ -82,6 +86,17 @@ export default function App() {
     ? (activeAdega === 'all' ? wines : wines.filter(w => w.adegaId === activeAdega))
     : (activeAdega === 'all' ? spirits : spirits.filter(s => s.adegaId === activeAdega));
 
+  const groupedItems = useMemo(() => {
+    if (groupBy === 'none') return { '': itemsToShow };
+    const groups: Record<string, any[]> = {};
+    itemsToShow.forEach(item => {
+      const key = (item as any)[groupBy] || '—';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(item);
+    });
+    return groups;
+  }, [itemsToShow, groupBy]);
+
   function handleAdminLogin(token: string) {
     setIsAuthenticated(true);
     setIsAdmin(true);
@@ -121,6 +136,35 @@ export default function App() {
     },
     onStock: (item: any) => { setSelectedItem(item); setActiveModal('stock'); },
     onExpert: (item: any) => { setSelectedItem(item); setActiveModal('expert'); },
+    onInout: () => setActiveModal('inout'),
+  };
+
+  const handleExportCSV = () => {
+    const rows = [["Nome", "Produtor", "País", "Tipo", "Uva", "Safra", "Qtd", "Adega", "Nota", "Notas"]];
+    wines.forEach(w => {
+      const a = adegas.find(x => x.id === w.adegaId)?.name || "";
+      rows.push([
+        w.name,
+        w.producer || "",
+        w.country || "",
+        w.type || "",
+        w.grape || "",
+        w.vintage || "",
+        w.qty.toString(),
+        a,
+        w.score?.toString() || "",
+        (w.notes || "").replace(/\n/g, " ")
+      ]);
+    });
+    const csvContent = rows.map(r => r.map(c => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `adega_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   async function handleItemSave(data: any) {
@@ -154,6 +198,13 @@ export default function App() {
   }
 
   async function handleDrinkSave(data: any) {
+    if (!isAdmin) {
+      const pass = prompt('Digite a senha de consumo para continuar:');
+      if (pass?.toLowerCase().trim() !== 'membeca') {
+        alert('Senha incorreta');
+        return;
+      }
+    }
     setSyncStatus('saving');
     try {
       const isSpirit = mode === 'spirits';
@@ -254,6 +305,7 @@ export default function App() {
         onLogout={handleLogout}
         onVoice={() => setActiveModal('voice')}
         onAdd={() => { setSelectedItem(null); setActiveModal('edit'); }}
+        onInout={() => setActiveModal('inout')}
       />
       
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-8 md:px-8">
@@ -293,10 +345,12 @@ export default function App() {
               <div className="bg-parchment/10 h-[1px] w-full" />
 
               <InventoryGrid 
-                items={itemsToShow} 
-                mode={mode} 
-                adegas={adegas} 
-                isAdmin={isAdmin} 
+                groupedItems={groupedItems}
+                mode={mode}
+                adegas={adegas}
+                isAdmin={isAdmin}
+                groupBy={groupBy}
+                onGroupByChange={setGroupBy}
                 {...handlers}
               />
             </motion.div>
@@ -352,7 +406,7 @@ export default function App() {
             adegaName={adegas.find(a => a.id === activeAdega)?.name || 'Todas'}
             onSelectItem={(item) => {
               setSelectedItem(item);
-              setActiveModal('expert'); // Open expert summary for the selected item
+              setActiveModal('expert');
             }}
             onClose={() => setActiveModal(null)} 
           />
@@ -365,6 +419,24 @@ export default function App() {
             activeAdegaId={activeAdega}
             onSave={handleItemSave}
             onClose={() => setActiveModal(null)} 
+          />
+        )}
+        {activeModal === 'stock' && selectedItem && (
+          <StockModal 
+            item={selectedItem} 
+            mode={mode} 
+            allItems={mode === 'wines' ? wines : spirits}
+            adegas={adegas}
+            onClose={() => setActiveModal(null)}
+            onRefresh={boot}
+          />
+        )}
+        {activeModal === 'inout' && (
+          <InOutModal 
+            onClose={() => setActiveModal(null)}
+            onExport={handleExportCSV}
+            onImport={() => alert('Importação automática via planilha está sendo aprimorada. Use o modo Adicionar por enquanto.')}
+            onBackup={() => alert('Backup: Use o Exportar CSV para baixar seus dados em uma planilha.')}
           />
         )}
       </AnimatePresence>
@@ -539,7 +611,7 @@ function LoginScreen({ onAdminLogin, onGuestLogin }: { onAdminLogin: (token: str
   );
 }
 
-function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, onLogout, onVoice, onAdd }: any) {
+function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, onLogout, onVoice, onAdd, onInout }: any) {
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200 h-16 flex items-center shadow-sm">
       <div className="max-w-7xl mx-auto w-full px-4 md:px-8 flex items-center justify-between gap-4">
@@ -585,6 +657,10 @@ function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, 
           <div className="w-[1px] h-4 bg-slate-200 mx-1 md:mx-2" />
           <HeaderBtn icon={<Mic size={16} />} label="Voz" onClick={onVoice} className="text-indigo-600 bg-indigo-50 hover:bg-indigo-100" />
           
+          {isAdmin && (
+            <HeaderBtn icon={<Database size={16} />} label="IO" onClick={onInout} />
+          )}
+
           {isAdmin && (
             <button 
               onClick={onAdd}

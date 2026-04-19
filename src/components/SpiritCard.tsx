@@ -57,7 +57,7 @@ export function SpiritCard({ spirit, adega, onDrink, onEdit, onDelete, onStock, 
           
           <div className="flex justify-between items-end">
             <div className={`px-2 py-1 rounded-lg text-[9px] font-bold text-white shadow-sm ${getLevelColor(spirit.isOpen ? spirit.level : 100)}`}>
-              NÍVEL: {spirit.isOpen ? spirit.level : 100}%
+              {spirit.isOpen && spirit.level === 0 ? '✓ VAZIA' : `NÍVEL: ${spirit.isOpen ? spirit.level : 100}%`}
             </div>
             {spirit.abv && (
               <div className="bg-white/90 backdrop-blur px-2 py-1 rounded-lg text-[9px] font-bold text-text-muted">

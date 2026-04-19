@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { Adega, Wine, Consumption, Spirit, SpiritConsumption } from '../types';
 
 const SB_URL = (import.meta.env.VITE_SUPABASE_URL as string) || '';

@@ -69,24 +69,41 @@ ${details}`;
 }
 
 export async function voiceAdegaSearchGemini(text: string, inventory: any[], adegaName: string): Promise<any> {
-  const prompt = `Você é um sommelier digital especializado em adegas pessoais. Recebi um pedido por voz e preciso sugerir os melhores vinhos do inventário.
+  const prompt = `Você é um sommelier digital especializado em adegas pessoais. Sua função é receber um pedido em português brasileiro e um inventário de vinhos, e retornar um ranking dos melhores candidatos.
 
-REGRAS:
-1. FILTRAGEM: Apenas vinhos com qty > 0.
-2. CONTEXTO: Infira o prato e a ocasião (festa, jantar romântico, churrasco, etc).
-3. RANKING: Sugira até 3 vinhos. Explique por que combinam (campo "motivo").
+REGRAS DE SELEÇÃO E PONTUAÇÃO:
 
-RETORNE EXCLUSIVAMENTE UM JSON:
+1. FILTRAGEM OBRIGATÓRIA:
+   - Inclua apenas vinhos com qty > 0.
+   - Elimine vinhos incompatíveis com o prato ou contexto inferido.
+
+2. PONTUAÇÃO COMPOSTA (0–100):
+   - P1 (Prontidão de guarda, peso 35): over→35, pass→28, peak→14, young→0, null→14.
+   - P2 (Qualidade/Score, peso 30): (score/100)*30. Se context for "festa", peso P2 dobra para 60.
+   - P3 (Relevância ao pedido, peso 35): Score 0-100 de harmonização normalizado.
+   pontuacao_total = P1 + P2 + P3.
+
+3. MOTIVO DO CARD:
+   Campo "motivo": 1–2 frases em tom de sommelier descontraído. Explique POR QUÊ o vinho combina. NÃO mencione termos técnicos de guarda.
+
+RETORNE EXCLUSIVAMENTE UM JSON VÁLIDO:
 {
-  "contexto": { "pedido_interpretado": "...", "tipo_comida": "...", "ocasiao": "...", "modo_festa": boolean },
+  "contexto": { 
+    "pedido_interpretado": "descrição em 1 frase", 
+    "tipo_comida": "...", 
+    "ocasiao": "festa|jantar|almoço|aperitivo|outro", 
+    "modo_festa": true|false 
+  },
   "ranking": [
-    { "id": "uuid", "nome": "...", "posicao": 1, "pontuacao_total": 85, "motivo": "..." }
+    { "id": "uuid", "nome": "...", "posicao": 1, "pontuacao_total": 85.5, "motivo": "..." }
   ]
 }
 
+Retorne até 3 vinhos.
+
 ADEGA ATIVA: ${adegaName}
 PEDIDO DO USUÁRIO: "${text}"
-INVENTÁRIO: ${JSON.stringify(inventory)}
+INVENTÁRIO (${inventory.length} disponíveis): ${JSON.stringify(inventory)}
 `;
 
   try {

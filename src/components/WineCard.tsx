@@ -80,10 +80,16 @@ export function WineCard({ wine, adega, onDrink, onEdit, onDelete, onStock, onEx
             <div className={`px-2 py-1 rounded-lg text-[9px] font-bold text-white shadow-sm ${textColor.replace('text-', 'bg-')} opacity-90`}>
               {wine.type.toUpperCase()}
             </div>
-            {isEmpty && (
+            {isEmpty ? (
               <div className="bg-zinc-800/80 backdrop-blur px-2 py-1 rounded-lg text-[9px] font-bold text-white">
-                ✓ CONSUMIDO
+                {wine.type === 'Porto' || wine.type === 'Sobremesa' ? '✓ VAZIA' : '✓ CONSUMIDO'}
               </div>
+            ) : (
+              wine.drinkUntil && new Date().getFullYear() <= wine.drinkUntil - 2 && (
+                <div className="bg-emerald-600/90 backdrop-blur px-2 py-1 rounded-lg text-[9px] font-bold text-white shadow-sm">
+                  🎯 NO PONTO
+                </div>
+              )
             )}
           </div>
         </div>
