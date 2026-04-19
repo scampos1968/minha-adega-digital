@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Wine, Spirit, Adega, Consumption, SpiritConsumption } from './types';
 import { sbGet, sbUpsert, sbPatch, sbDel, wineFromDB, spiritFromDB, consumptionFromDB, spiritConsumptionFromDB, consumptionToDB, spiritConsumptionToDB, sbLogin } from './lib/supabase';
-import { LogIn, User, Wine as WineIcon, History, RefreshCw, Plus, Mic, Package, Trash2, BookOpen, GlassWater, Settings, X, Search, LogOut, Database, Camera, Star, ArrowLeft, LayoutGrid } from 'lucide-react';
+import { LogIn, User, Wine as WineIcon, History, RefreshCw, Plus, Mic, Package, Trash2, BookOpen, GlassWater, Settings, X, Search, LogOut, Database, Camera, Star, ArrowLeft, LayoutGrid, BarChart3, ChevronRight, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { InventoryGrid } from './components/InventoryGrid';
 import { generateExpertSummaryGemini } from './lib/ai';
@@ -9,8 +9,9 @@ import { DrinkModal } from './components/DrinkModal';
 import { VoiceModal } from './components/VoiceModal';
 import { ConsumptionCard } from './components/ConsumptionCard';
 import { StockModal } from './components/StockModal';
-import { InOutModal } from './components/InOutModal';
+import { ReportsModal } from './components/ReportsModal';
 import { ItemModal } from './components/ItemModal';
+import { ImportPhotosModal } from './components/ImportPhotosModal';
 import { AnalysisModal } from './components/AnalysisModal';
 import { wineToDB, spiritToDB } from './lib/supabase';
 
@@ -32,9 +33,11 @@ export default function App() {
   const [groupBy, setGroupBy] = useState<string>('none');
   
   // Modal state
-  const [activeModal, setActiveModal] = useState<'expert' | 'drink' | 'edit' | 'stock' | 'voice' | 'inout' | null>(null);
+  const [activeModal, setActiveModal] = useState<'expert' | 'drink' | 'edit' | 'stock' | 'voice' | 'inout' | 'scan' | null>(null);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [scanToken, setScanToken] = useState(0);
+  const [scannedData, setScannedData] = useState<{ data: any, imageUrl: string } | null>(null);
+  const [scanQueue, setScanQueue] = useState<{ data: any, imageUrl: string }[]>([]);
 
   useEffect(() => {
     checkSession();
@@ -391,10 +394,10 @@ export default function App() {
         onVoice={() => setActiveModal('voice')}
         onScan={() => {
           setSelectedItem(null);
-          setScanToken(prev => prev + 1);
-          setActiveModal('edit');
+          setScannedData(null);
+          setActiveModal('scan');
         }}
-        onAdd={() => { setSelectedItem(null); setActiveModal('edit'); }}
+        onAdd={() => { setSelectedItem(null); setScannedData(null); setActiveModal('edit'); }}
         onInout={() => setActiveModal('inout')}
       />
       
@@ -506,9 +509,42 @@ export default function App() {
             mode={mode} 
             adegas={adegas}
             activeAdegaId={activeAdega}
-            onSave={handleItemSave}
-            onClose={() => setActiveModal(null)} 
+            onSave={async (data) => {
+              await handleItemSave(data);
+              if (scanQueue.length > 0) {
+                const next = scanQueue[0];
+                setScanQueue(prev => prev.slice(1));
+                setScannedData(next);
+              } else {
+                setScannedData(null);
+                setActiveModal(null);
+              }
+            }}
+            onClose={() => { 
+                setActiveModal(null); 
+                setScannedData(null); 
+                setScanQueue([]);
+            }} 
             autoScan={!selectedItem && scanToken > 0}
+            preScannedData={scannedData}
+          />
+        )}
+        {activeModal === 'scan' && (
+          <ImportPhotosModal 
+            adegas={adegas}
+            activeAdegaId={activeAdega}
+            onClose={() => setActiveModal(null)}
+            onResults={(results) => {
+              if (results.length > 0) {
+                const first = results[0];
+                setScanQueue(results.slice(1));
+                setScannedData(first);
+                setSelectedItem(null);
+                setActiveModal('edit');
+              } else {
+                setActiveModal(null);
+              }
+            }}
           />
         )}
         {activeModal === 'stock' && selectedItem && (
@@ -523,7 +559,15 @@ export default function App() {
           />
         )}
         {activeModal === 'inout' && (
-          <InOutModal 
+          <ReportsModal 
+            wines={wines}
+            spirits={spirits}
+            adegas={adegas}
+            consumptions={consumptions}
+            spiritCons={spiritCons}
+            view={view}
+            mode={mode}
+            activeAdegaId={activeAdega}
             onClose={() => setActiveModal(null)}
             onExport={handleExportCSV}
             onImport={() => alert('Importação automática via planilha está sendo aprimorada. Use o modo Adicionar por enquanto.')}
@@ -744,7 +788,13 @@ function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, 
           </button>
           
           {isAdmin && (
-            <button onClick={onInout} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Banco de dados">
+            <button onClick={onInout} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Relatórios e Dashboard">
+              <BarChart3 size={16} />
+            </button>
+          )}
+
+          {isAdmin && (
+            <button onClick={onInout} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Banco de Dados">
               <Database size={16} />
             </button>
           )}

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Wine, Spirit, Adega, Consumption, SpiritConsumption } from '../types';
 import { WineCard } from './WineCard';
 import { SpiritCard } from './SpiritCard';
-import { Search, Filter, X, LayoutGrid, List } from 'lucide-react';
+import { Search, Filter, X, LayoutGrid, List, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface GridProps {
@@ -31,15 +31,24 @@ export function InventoryGrid({ groupedItems, mode, adegas, isAdmin, groupBy, on
   });
   
   const allItems = Object.values(groupedItems).flat();
+
+  const normalizeText = (text: string) => 
+    text.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
   
   const filteredGroupedItems = useMemo(() => {
     const next: Record<string, any[]> = {};
+    const normalizedSearch = normalizeText(search);
+
     Object.entries(groupedItems).forEach(([group, items]) => {
       const filtered = items.filter(item => {
+        const normalizedName = normalizeText(item.name);
+        const normalizedProducer = normalizeText(item.producer || '');
+        const normalizedNotes = normalizeText(item.notes || '');
+
         const matchSearch = 
-          item.name.toLowerCase().includes(search.toLowerCase()) ||
-          item.producer?.toLowerCase().includes(search.toLowerCase()) ||
-          item.notes?.toLowerCase().includes(search.toLowerCase());
+          normalizedName.includes(normalizedSearch) ||
+          normalizedProducer.includes(normalizedSearch) ||
+          normalizedNotes.includes(normalizedSearch);
         
         const matchType = !filters.type || item.type === filters.type;
         const matchCountry = !filters.country || item.country === filters.country;
@@ -208,51 +217,69 @@ export function InventoryGrid({ groupedItems, mode, adegas, isAdmin, groupBy, on
       </AnimatePresence>
 
       <div className="space-y-12">
-        {Object.entries(filteredGroupedItems).map(([group, sectionItems]: [string, any[]]) => (
-          <div key={group || 'all'} className="space-y-4">
-            {groupBy !== 'none' && (
-              <div className="flex items-center gap-3">
-                <span className="bg-brand-wine/10 text-brand-wine text-[12px] font-medium px-4 py-1.5 rounded-lg font-serif italic">
-                  {groupBy === 'adegaId' ? adegas.find(a => a.id === group)?.name || group : group}
-                </span>
-                <div className="flex-1 h-[1px] bg-black/5" />
-                <span className="text-[11px] font-normal text-text-muted">
-                  {sectionItems.length} garrafas
-                </span>
+        {Object.entries(filteredGroupedItems).map(([group, sectionItems]: [string, any[]]) => {
+          const totalQty = sectionItems.reduce((acc, item) => acc + (item.qty || 0), 0);
+          const scoredItems = sectionItems.filter(i => i.score);
+          const avgScore = scoredItems.length 
+            ? (scoredItems.reduce((acc, i) => acc + (i.score || 0), 0) / scoredItems.length).toFixed(1)
+            : null;
+
+          return (
+            <div key={group || 'all'} className="space-y-4">
+              {groupBy !== 'none' && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-cream-dark border border-black/5 rounded-2xl px-5 py-3 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="bg-brand-wine text-white text-[12px] font-bold px-4 py-1 rounded-lg font-serif italic shadow-sm">
+                      {groupBy === 'adegaId' ? adegas.find(a => a.id === group)?.name || group : group}
+                    </span>
+                    <span className="text-[11px] font-bold text-text-muted uppercase tracking-widest pl-1">
+                      {totalQty} {totalQty === 1 ? 'Garrafa' : 'Garrafas'}
+                    </span>
+                  </div>
+                  
+                  {avgScore && (
+                    <div className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-widest text-text-sub shrink-0">
+                      <div className="flex items-center gap-1.5 text-brand-gold">
+                        <Star size={12} fill="currentColor" />
+                        <span>Média: {avgScore}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+                <AnimatePresence mode="popLayout">
+                  {sectionItems.map(item => (
+                    <motion.div 
+                      key={item.id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {mode === 'wines' ? (
+                        <WineCard 
+                          wine={item as Wine} 
+                          adega={adegas.find(a => a.id === item.adegaId)}
+                          isAdmin={isAdmin}
+                          {...handlers}
+                        />
+                      ) : (
+                        <SpiritCard 
+                          spirit={item as Spirit}
+                          adega={adegas.find(a => a.id === item.adegaId)}
+                          isAdmin={isAdmin}
+                          {...handlers}
+                        />
+                      )}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               </div>
-            )}
-            
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
-              <AnimatePresence mode="popLayout">
-                {sectionItems.map(item => (
-                  <motion.div 
-                    key={item.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {mode === 'wines' ? (
-                      <WineCard 
-                        wine={item as Wine} 
-                        adega={adegas.find(a => a.id === item.adegaId)}
-                        isAdmin={isAdmin}
-                        {...handlers}
-                      />
-                    ) : (
-                      <SpiritCard 
-                        spirit={item as Spirit}
-                        adega={adegas.find(a => a.id === item.adegaId)}
-                        isAdmin={isAdmin}
-                        {...handlers}
-                      />
-                    )}
-                  </motion.div>
-                ))}
-              </AnimatePresence>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {Object.keys(filteredGroupedItems).length === 0 && (

@@ -13,35 +13,52 @@ interface ItemModalProps {
   onClose: () => void;
   onSave: (data: any) => Promise<void>;
   autoScan?: boolean;
+  preScannedData?: { data: any, imageUrl: string } | null;
 }
 
-export function ItemModal({ item, mode, adegas, activeAdegaId, onClose, onSave, autoScan }: ItemModalProps) {
+export function ItemModal({ item, mode, adegas, activeAdegaId, onClose, onSave, autoScan, preScannedData }: ItemModalProps) {
   const isEdit = !!item;
   const isWine = mode === 'wines';
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (autoScan && fileInputRef.current) {
+    if (autoScan && fileInputRef.current && !preScannedData) {
       fileInputRef.current.click();
     }
-  }, [autoScan]);
+  }, [autoScan, preScannedData]);
 
-  const [formData, setFormData] = useState<any>({
-    id: item?.id || crypto.randomUUID(),
-    adegaId: item?.adegaId || (activeAdegaId !== 'all' ? activeAdegaId : adegas[0]?.id),
-    name: item?.name || '',
-    producer: item?.producer || '',
-    country: item?.country || '',
-    type: item?.type || (isWine ? 'Tinto' : 'Whisky'),
-    grape: (item as any)?.grape || '',
-    vintage: (item as any)?.vintage || '',
-    region: (item as any)?.region || '',
-    abv: (item as any)?.abv || '',
-    qty: item?.qty || 1,
-    level: item?.level ?? 100,
-    score: item?.score || null,
-    notes: item?.notes || '',
-    imageUrl: item?.imageUrl || '',
+  const [formData, setFormData] = useState<any>(() => {
+    const base = {
+      id: item?.id || crypto.randomUUID(),
+      adegaId: item?.adegaId || (activeAdegaId !== 'all' ? activeAdegaId : adegas[0]?.id),
+      name: item?.name || '',
+      producer: item?.producer || '',
+      country: item?.country || '',
+      type: item?.type || (isWine ? 'Tinto' : 'Whisky'),
+      grape: (item as any)?.grape || '',
+      vintage: (item as any)?.vintage || '',
+      region: (item as any)?.region || '',
+      abv: (item as any)?.abv || '',
+      qty: item?.qty || 1,
+      level: item?.level ?? 100,
+      score: item?.score || null,
+      notes: item?.notes || '',
+      imageUrl: item?.imageUrl || '',
+    };
+
+    if (preScannedData) {
+      return {
+        ...base,
+        imageUrl: preScannedData.imageUrl,
+        name: preScannedData.data.nome || base.name,
+        producer: preScannedData.data.produtor || base.producer,
+        country: preScannedData.data.país || base.country,
+        vintage: preScannedData.data.safra || base.vintage,
+        grape: preScannedData.data.uva || base.grape,
+        type: preScannedData.data.tipo || base.type,
+      };
+    }
+    return base;
   });
 
   const [loadingAI, setLoadingAI] = useState(false);
@@ -135,60 +152,61 @@ export function ItemModal({ item, mode, adegas, activeAdegaId, onClose, onSave, 
         {/* Top: Image & Essential Info */}
         <div className="flex flex-col md:flex-row gap-6">
           <div className="w-full md:w-40 shrink-0">
-             <label className="relative aspect-[3/4] bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-indigo-400 transition-colors">
+             <label className="relative aspect-[3/4] bg-white border border-black/10 rounded-[28px] flex flex-col items-center justify-center cursor-pointer overflow-hidden group hover:border-brand-gold/50 transition-all shadow-sm">
                {formData.imageUrl ? (
-                 <img src={formData.imageUrl} className="w-full h-full object-cover" />
+                 <img src={formData.imageUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                ) : (
                  <div className="text-center p-4">
-                   <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto mb-2 text-indigo-500 shadow-sm">
-                     <Camera size={20} />
+                   <div className="w-12 h-12 bg-cream-dark/50 rounded-full flex items-center justify-center mx-auto mb-3 text-text-muted">
+                     <Camera size={24} />
                    </div>
-                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Scan Rótulo</p>
+                   <p className="text-[9px] font-bold uppercase tracking-widest text-text-muted">Escanear Rótulo</p>
                  </div>
                )}
                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAIIdentify} />
-               <div className="absolute inset-0 bg-indigo-600/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                 <Sparkles size={24} className="animate-pulse" />
+               <div className="absolute inset-0 bg-brand-wine/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                 <Sparkles size={24} className="text-brand-wine animate-pulse" fill="white" />
                </div>
                {loadingAI && (
-                 <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
-                   <RefreshCw size={24} className="animate-spin text-indigo-600" />
+                 <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-2">
+                    <RefreshCw size={24} className="animate-spin text-brand-gold" />
+                    <span className="text-[8px] font-bold text-text-muted uppercase tracking-tighter">Lendo IA</span>
                  </div>
                )}
              </label>
           </div>
 
-          <div className="flex-1 space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Nome da Bebida</label>
+          <div className="flex-1 space-y-5">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted pl-1">Nome da Bebida</label>
               <input 
                 type="text" 
                 value={formData.name} 
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="Ex: Chateau Margaux"
-                className="w-full bg-white border border-slate-200 rounded-xl py-3 px-4 text-base focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold text-slate-800"
+                className="w-full bg-white border border-black/5 rounded-[22px] py-4 px-5 text-base focus:ring-2 focus:ring-brand-gold/10 focus:border-brand-gold/40 outline-none transition-all font-serif italic text-text-main font-bold"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Produtor</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted pl-1">Produtor</label>
                 <input 
                   type="text" 
                   value={formData.producer}
                   onChange={(e) => setFormData(prev => ({ ...prev, producer: e.target.value }))}
-                  className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-sm focus:border-brand-gold/40 outline-none transition-all font-medium text-text-main"
                 />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">País</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted pl-1">País</label>
                 <div className="relative">
-                  <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 opacity-60" />
+                  <MapPin size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted opacity-40" />
                   <input 
                     type="text" 
                     value={formData.country}
                     onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
-                    className="w-full bg-white border border-slate-200 rounded-xl py-2.5 pl-9 pr-3 text-sm focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                    className="w-full bg-white border border-black/5 rounded-[18px] py-3 pl-11 pr-4 text-sm focus:border-brand-gold/40 outline-none transition-all font-medium text-text-main"
                   />
                 </div>
               </div>
@@ -197,24 +215,24 @@ export function ItemModal({ item, mode, adegas, activeAdegaId, onClose, onSave, 
         </div>
 
         {/* Detailed Info */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Adega</label>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted pl-1">Adega</label>
             <select 
               value={formData.adegaId}
               onChange={(e) => setFormData(prev => ({ ...prev, adegaId: e.target.value }))}
-              className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all appearance-none"
+              className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-sm focus:border-brand-gold/40 outline-none transition-all appearance-none font-semibold text-text-main shadow-sm"
             >
               {adegas.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tipo</label>
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted pl-1">Tipo</label>
             <select 
               value={formData.type}
               onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
-              className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all appearance-none"
+              className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-sm focus:border-brand-gold/40 outline-none transition-all appearance-none font-semibold text-text-main shadow-sm"
             >
               {isWine ? (
                 ['Tinto', 'Branco', 'Rosé', 'Espumante', 'Porto', 'Sobremesa'].map(t => <option key={t} value={t}>{t}</option>)
@@ -224,17 +242,17 @@ export function ItemModal({ item, mode, adegas, activeAdegaId, onClose, onSave, 
             </select>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Quantidade</label>
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted pl-1">Quantidade</label>
             <div className="flex items-center">
-               <button onClick={() => setFormData(prev => ({ ...prev, qty: Math.max(0, prev.qty - 1) }))} className="w-10 h-10 border border-slate-200 rounded-l-xl flex items-center justify-center hover:bg-slate-50 transition-all">-</button>
+               <button onClick={() => setFormData(prev => ({ ...prev, qty: Math.max(0, prev.qty - 1) }))} className="w-10 h-11 bg-white border border-black/5 rounded-l-[18px] flex items-center justify-center hover:bg-cream-dark transition-all text-text-sub">-</button>
                <input 
                   type="number" 
                   value={formData.qty} 
                   onChange={(e) => setFormData(prev => ({ ...prev, qty: parseInt(e.target.value) || 0 }))}
-                  className="w-full max-w-[50px] bg-white border-y border-slate-200 py-2.5 px-2 text-center text-sm outline-none" 
+                  className="w-full max-w-[50px] bg-white border-y border-black/5 h-11 text-center text-[15px] font-bold text-text-main outline-none" 
                />
-               <button onClick={() => setFormData(prev => ({ ...prev, qty: prev.qty + 1 }))} className="w-10 h-10 border border-slate-200 rounded-r-xl flex items-center justify-center hover:bg-slate-50 transition-all">+</button>
+               <button onClick={() => setFormData(prev => ({ ...prev, qty: prev.qty + 1 }))} className="w-10 h-11 bg-white border border-black/5 rounded-r-[18px] flex items-center justify-center hover:bg-cream-dark transition-all text-text-sub">+</button>
             </div>
           </div>
 

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ModalShell } from './ModalShell';
-import { Mic, MicOff, Search, Sparkles, Trophy, ChefHat, PartyPopper, Heart } from 'lucide-react';
+import { X, Mic, RefreshCw, Star, Sparkles, ChefHat, PartyPopper, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { voiceAdegaSearchGemini } from '../lib/ai';
 
@@ -21,7 +20,6 @@ export function VoiceModal({ inventory, adegaName, onClose, onSelectItem }: Voic
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
-    // Check for standard web speech API
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
       recognitionRef.current = new SpeechRecognition();
@@ -91,161 +89,169 @@ export function VoiceModal({ inventory, adegaName, onClose, onSelectItem }: Voic
     if (!isListening && transcript && !result && !isProcessing) {
       handleSearch();
     }
-  }, [isListening]);
+  }, [isListening, transcript, result, isProcessing]);
 
   return (
-    <ModalShell 
-      title="Busca por Voz Inteligente" 
-      onClose={onClose}
-      icon={<Mic size={20} className="text-indigo-600" />}
-      maxWidth="max-w-xl"
-    >
-      <div className="space-y-8 py-4">
-        {/* Visual Pulse */}
-        <div className="flex flex-col items-center justify-center space-y-4">
-          <div className="relative">
-            <AnimatePresence>
-              {isListening && (
-                <>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm" 
+      />
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="relative bg-[#faf7f2] border border-black/15 rounded-[40px] w-full max-w-lg max-h-[90vh] overflow-hidden shadow-old-lg flex flex-col font-sans"
+      >
+        {/* Header */}
+        <div className="px-8 py-6 flex items-center justify-between border-b border-black/5">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-brand-wine text-white rounded-xl flex items-center justify-center shadow-md">
+               <Mic size={20} />
+             </div>
+             <h3 className="text-[26px] font-serif italic text-text-main leading-none">Busca por Voz</h3>
+          </div>
+          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center bg-cream-dark/50 hover:bg-cream-dark rounded-full transition-colors text-text-sub">
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-8 space-y-10 min-h-0">
+          {/* Main Interface */}
+          <div className="flex flex-col items-center justify-center space-y-6 pt-4">
+            <div className="relative">
+              <AnimatePresence>
+                {isListening && (
                   <motion.div 
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1.5, opacity: 0 }}
-                    transition={{ repeat: Infinity, duration: 1.5 }}
-                    className="absolute inset-0 bg-indigo-600/20 rounded-full"
+                    initial={{ scale: 0.8, opacity: 0.5 }}
+                    animate={{ scale: 2.2, opacity: 0 }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className="absolute inset-0 bg-brand-wine/10 rounded-full"
                   />
-                  <motion.div 
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 2, opacity: 0 }}
-                    transition={{ repeat: Infinity, duration: 1.5, delay: 0.5 }}
-                    className="absolute inset-0 bg-indigo-600/10 rounded-full"
-                  />
-                </>
+                )}
+              </AnimatePresence>
+              <button
+                onClick={toggleListening}
+                className={`relative z-10 w-32 h-32 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl border-4 ${
+                  isListening 
+                    ? 'bg-brand-wine border-brand-wine/20 text-white scale-105' 
+                    : 'bg-white border-black/5 text-text-muted hover:border-brand-wine/30'
+                }`}
+              >
+                <Mic size={48} className={isListening ? 'animate-pulse' : ''} />
+              </button>
+            </div>
+            
+            <div className="text-center">
+              <p className="text-[11px] font-bold uppercase tracking-[4px] text-text-muted">
+                {isListening ? 'Escutando...' : 'Toque para falar'}
+              </p>
+              {!isListening && !transcript && (
+                <p className="text-[13px] italic text-text-sub mt-4 max-w-[240px]">
+                  "Sugira um tinto leve para harmonizar com massas"
+                </p>
               )}
-            </AnimatePresence>
-            <button
-              onClick={toggleListening}
-              className={`relative z-10 w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 shadow-xl ${
-                isListening ? 'bg-indigo-600 text-white scale-110' : 'bg-white border border-slate-200 text-slate-400 hover:border-indigo-400'
-              }`}
-            >
-              {isListening ? <Mic size={40} /> : <MicOff size={40} />}
-            </button>
+            </div>
           </div>
-          <p className="text-xs font-bold uppercase tracking-[3px] text-slate-400">
-            {isListening ? 'Escutando...' : 'Toque para falar'}
-          </p>
-        </div>
 
-        {/* Transcript Box */}
-        <div className={`p-6 rounded-2xl border transition-all duration-500 ${transcript ? 'bg-white border-indigo-200 shadow-lg' : 'bg-slate-50 border-slate-100 opacity-40'}`}>
-          <div className="flex items-center gap-2 mb-2 text-[10px] font-bold uppercase tracking-widest text-indigo-600">
-            <Sparkles size={12} />
-            <span>Sua solicitação</span>
-          </div>
-          <p className="text-lg font-bold text-slate-800 leading-relaxed min-h-[3rem]">
-            {transcript || 'Ex: "Sugira um vinho tinto encorpado para um churrasco de domingo"'}
-          </p>
-        </div>
-
-        {/* Processing State */}
-        {isProcessing && (
-          <div className="flex flex-col items-center gap-4 py-8">
+          {/* Transcript Display */}
+          {(transcript || isProcessing) && (
             <motion.div 
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-              className="text-indigo-600"
-            >
-              <RefreshCw size={32} />
-            </motion.div>
-            <p className="font-bold text-slate-400 text-sm uppercase tracking-widest">Interpretando sua adega...</p>
-          </div>
-        )}
-
-        {/* Errors */}
-        {error && (
-          <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-sm text-center">
-            {error}
-          </div>
-        )}
-
-        {/* Results */}
-        <AnimatePresence>
-          {result && (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }} 
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
+              className="p-6 bg-white border border-black/5 rounded-[32px] shadow-sm relative"
             >
-              <div className="flex gap-2">
-                <div className="flex-1 bg-slate-50 p-4 rounded-xl flex items-center gap-3">
-                   <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-indigo-600 shadow-sm">
-                      {result.contexto?.ocasiao?.includes('rom') ? <Heart size={16} /> : result.contexto?.ocasiao?.includes('fest') ? <PartyPopper size={16} /> : <ChefHat size={16} />}
-                   </div>
-                   <div>
-                     <p className="text-[10px] font-bold uppercase text-slate-400">Contexto Interpretado</p>
-                     <p className="text-xs font-bold text-slate-700">{result.contexto?.pedido_interpretado}</p>
-                   </div>
-                </div>
+              <div className="flex items-center gap-2 mb-3 text-[10px] font-bold uppercase tracking-widest text-brand-gold">
+                <Sparkles size={12} fill="currentColor" />
+                <span>O que você disse</span>
               </div>
-
-              <div className="space-y-3">
-                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                  <Trophy size={14} className="text-amber-500" />
-                  Sugestões da IA
-                </h4>
-                <div className="space-y-2">
-                  {result.ranking?.map((rank: any, i: number) => {
-                    const item = inventory.find(inv => inv.id === rank.id);
-                    return (
-                      <motion.button
-                        key={rank.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        onClick={() => item && onSelectItem(item)}
-                        className="w-full bg-white hover:bg-slate-50 border border-slate-200 p-4 rounded-xl flex items-center gap-4 text-left transition-all group shadow-sm hover:shadow-md"
-                      >
-                        <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-inner">
-                          {rank.posicao}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h5 className="font-bold text-slate-800 truncate">{rank.nome}</h5>
-                          <p className="text-[11px] text-slate-500 leading-snug line-clamp-2 mt-1 font-medium">{rank.motivo}</p>
-                        </div>
-                        <div className="text-xs font-bold text-amber-500 px-2 py-1 bg-amber-50 rounded-lg">
-                          {rank.pontuacao_total}pts
-                        </div>
-                      </motion.button>
-                    );
-                  })}
+              <p className="text-[15px] font-bold text-text-main leading-relaxed italic">
+                {transcript || 'Interpretando comandos...'}
+              </p>
+              {isProcessing && (
+                <div className="absolute right-6 bottom-6">
+                  <RefreshCw size={18} className="animate-spin text-brand-gold" />
                 </div>
-              </div>
+              )}
             </motion.div>
           )}
-        </AnimatePresence>
-      </div>
-    </ModalShell>
-  );
-}
 
-function RefreshCw({ size, className }: { size?: number, className?: string }) {
-  return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      width={size || 24} 
-      height={size || 24} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      className={className}
-    >
-      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-      <path d="M21 3v5h-5" />
-      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-      <path d="M8 16H3v5" />
-    </svg>
+          {/* Error Message */}
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-sm text-center font-bold">
+              {error}
+            </div>
+          )}
+
+          {/* Results Suggestions */}
+          <AnimatePresence>
+            {result && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6 pb-4"
+              >
+                <div className="bg-cream-dark/40 p-5 rounded-[28px] flex items-center gap-4">
+                   <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-brand-wine shadow-sm shrink-0">
+                      {result.contexto?.ocasiao?.toLowerCase().includes('rom') ? <Heart size={20} /> : result.contexto?.ocasiao?.toLowerCase().includes('fest') ? <PartyPopper size={20} /> : <ChefHat size={20} />}
+                   </div>
+                   <div>
+                     <p className="text-[10px] font-bold uppercase text-text-muted tracking-widest leading-tight">Insight da IA</p>
+                     <p className="text-[13px] font-bold text-text-main mt-0.5">{result.contexto?.pedido_interpretado}</p>
+                   </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-[11px] font-bold uppercase tracking-[0.15em] text-text-sub pl-2">Melhores Sugestões</h4>
+                  <div className="grid gap-3">
+                    {result.ranking?.map((rank: any, i: number) => {
+                      const item = inventory.find(inv => inv.id === rank.id);
+                      return (
+                        <motion.button
+                          key={rank.id}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.1 }}
+                          onClick={() => item && onSelectItem(item)}
+                          className="w-full bg-white hover:bg-cream-dark/20 border border-black/5 p-4 rounded-[28px] flex items-center gap-4 text-left transition-all group shadow-sm hover:shadow-md"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-brand-wine text-white flex items-center justify-center font-serif italic font-bold text-sm shadow-inner shrink-0">
+                            {rank.posicao}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h5 className="font-bold text-text-main truncate text-[14px]">{rank.nome}</h5>
+                            <p className="text-[11px] text-text-sub leading-snug line-clamp-2 mt-1 font-medium">{rank.motivo}</p>
+                          </div>
+                          <div className="flex flex-col items-end shrink-0">
+                            <div className="flex items-center gap-1 text-[13px] font-bold text-brand-gold font-serif italic">
+                              {rank.pontuacao_total}
+                              <Star size={10} fill="currentColor" />
+                            </div>
+                            <span className="text-[8px] font-bold text-text-muted uppercase tracking-tighter mt-0.5">Matched</span>
+                          </div>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Footer */}
+        <div className="p-8 pt-0 flex justify-center">
+          <button 
+            onClick={onClose}
+            className="w-full py-4 bg-white border border-black/5 rounded-[22px] text-[15px] font-semibold text-text-main hover:bg-cream-dark transition-all shadow-sm"
+          >
+            Fechar
+          </button>
+        </div>
+      </motion.div>
+    </div>
   );
 }
