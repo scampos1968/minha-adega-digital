@@ -342,12 +342,11 @@ export default function App() {
 
   // Combine and sort history
   const historyList = useMemo(() => {
-    const list = [
-      ...consumptions.map(c => ({ ...c, isSpirit: false })),
-      ...spiritCons.map(c => ({ ...c, isSpirit: true }))
-    ];
+    const list = mode === 'wines' 
+      ? consumptions.map(c => ({ ...c, isSpirit: false }))
+      : spiritCons.map(c => ({ ...c, isSpirit: true }));
     return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [consumptions, spiritCons]);
+  }, [consumptions, spiritCons, mode]);
 
   if (loading) {
     return <LoadingIndicator />;
@@ -724,6 +723,10 @@ function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, 
 
           <button onClick={onVoice} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Voz">
             <Mic size={16} />
+          </button>
+
+          <button onClick={onScan} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Scan">
+            <Camera size={16} />
           </button>
 
           <div className="w-[1px] h-4 bg-black/5 mx-0.5 sm:mx-1" />
