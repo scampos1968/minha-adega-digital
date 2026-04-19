@@ -1,44 +1,44 @@
 @import "tailwindcss";
 
 @theme {
-  --font-serif: "Libre Baskerville", serif;
   --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Libre Baskerville", series;
 
   --color-cream: #faf7f2;
-  --color-cream2: #f3ede3;
-  --color-cream3: #e8dfd0;
+  --color-cream-dark: #f3ede3;
+  --color-cream-deep: #e8dfd0;
   --color-parchment: #d4c5b0;
+  
+  --color-brand-wine: #722f37;
+  --color-brand-gold: #a07840;
+  
   --color-text-main: #2c2416;
   --color-text-sub: #7a6a55;
   --color-text-muted: #b0a090;
-  --color-wine: #722f37;
-  --color-gold: #a07840;
 
-  --shadow-sh: 0 1px 3px rgba(44, 36, 22, 0.08), 0 4px 16px rgba(44, 36, 22, 0.06);
-  --shadow-sh2: 0 2px 8px rgba(44, 36, 22, 0.12), 0 8px 32px rgba(44, 36, 22, 0.08);
+  --shadow-old: 0 1px 3px rgba(44,36,22,0.08), 0 4px 16px rgba(44,36,22,0.06);
+  --shadow-old-lg: 0 2px 8px rgba(44,36,22,0.12), 0 8px 32px rgba(44,36,22,0.08);
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;1,400&family=Outfit:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;1,400&family=Outfit:wght@300;400;500&display=swap');
 
 @layer base {
   body {
-    @apply bg-cream font-sans text-text-main antialiased;
-    font-weight: 300;
+    @apply bg-cream font-sans text-text-main antialiased font-light;
   }
 
   h1, h2, h3, h4 {
-    @apply font-serif;
+    @apply font-serif font-normal;
+  }
+
+  input, select, textarea {
+    @apply font-sans font-light;
   }
 }
 
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: none; }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.3s ease both;
+/* Base Utility */
+.glass {
+  @apply bg-white/94 backdrop-blur-lg border-b border-black/10;
 }
 
 /* Custom Scrollbar */
@@ -46,14 +46,9 @@
   width: 4px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-parchment);
+  background: #d4c5b0;
   border-radius: 2px;
 }
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+::-webkit-scrollbar-track {
+  background: transparent;
 }

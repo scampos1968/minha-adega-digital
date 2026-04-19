@@ -97,7 +97,7 @@ export function VoiceModal({ inventory, adegaName, onClose, onSelectItem }: Voic
     <ModalShell 
       title="Busca por Voz Inteligente" 
       onClose={onClose}
-      icon={<Mic size={20} className="text-wine" />}
+      icon={<Mic size={20} className="text-indigo-600" />}
       maxWidth="max-w-xl"
     >
       <div className="space-y-8 py-4">
@@ -111,13 +111,13 @@ export function VoiceModal({ inventory, adegaName, onClose, onSelectItem }: Voic
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1.5, opacity: 0 }}
                     transition={{ repeat: Infinity, duration: 1.5 }}
-                    className="absolute inset-0 bg-wine/20 rounded-full"
+                    className="absolute inset-0 bg-indigo-600/20 rounded-full"
                   />
                   <motion.div 
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 2, opacity: 0 }}
                     transition={{ repeat: Infinity, duration: 1.5, delay: 0.5 }}
-                    className="absolute inset-0 bg-wine/10 rounded-full"
+                    className="absolute inset-0 bg-indigo-600/10 rounded-full"
                   />
                 </>
               )}
@@ -125,24 +125,24 @@ export function VoiceModal({ inventory, adegaName, onClose, onSelectItem }: Voic
             <button
               onClick={toggleListening}
               className={`relative z-10 w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 shadow-xl ${
-                isListening ? 'bg-wine text-white scale-110' : 'bg-white border border-parchment/30 text-text-muted hover:border-wine/40'
+                isListening ? 'bg-indigo-600 text-white scale-110' : 'bg-white border border-slate-200 text-slate-400 hover:border-indigo-400'
               }`}
             >
               {isListening ? <Mic size={40} /> : <MicOff size={40} />}
             </button>
           </div>
-          <p className="text-xs font-bold uppercase tracking-[3px] text-text-sub opacity-60">
+          <p className="text-xs font-bold uppercase tracking-[3px] text-slate-400">
             {isListening ? 'Escutando...' : 'Toque para falar'}
           </p>
         </div>
 
         {/* Transcript Box */}
-        <div className={`p-6 rounded-3xl border transition-all duration-500 ${transcript ? 'bg-white border-gold/30 shadow-sh1' : 'bg-cream2/50 border-parchment/10 opacity-40'}`}>
-          <div className="flex items-center gap-2 mb-2 text-[10px] font-bold uppercase tracking-widest text-gold">
+        <div className={`p-6 rounded-2xl border transition-all duration-500 ${transcript ? 'bg-white border-indigo-200 shadow-lg' : 'bg-slate-50 border-slate-100 opacity-40'}`}>
+          <div className="flex items-center gap-2 mb-2 text-[10px] font-bold uppercase tracking-widest text-indigo-600">
             <Sparkles size={12} />
             <span>Sua solicitação</span>
           </div>
-          <p className="text-lg font-serif italic text-text-main leading-relaxed min-h-[3rem]">
+          <p className="text-lg font-bold text-slate-800 leading-relaxed min-h-[3rem]">
             {transcript || 'Ex: "Sugira um vinho tinto encorpado para um churrasco de domingo"'}
           </p>
         </div>
@@ -153,11 +153,11 @@ export function VoiceModal({ inventory, adegaName, onClose, onSelectItem }: Voic
             <motion.div 
               animate={{ rotate: 360 }}
               transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-              className="text-gold"
+              className="text-indigo-600"
             >
               <RefreshCw size={32} />
             </motion.div>
-            <p className="italic font-serif text-text-muted">Interpretando sua adega...</p>
+            <p className="font-bold text-slate-400 text-sm uppercase tracking-widest">Interpretando sua adega...</p>
           </div>
         )}
 
@@ -177,20 +177,20 @@ export function VoiceModal({ inventory, adegaName, onClose, onSelectItem }: Voic
               className="space-y-6"
             >
               <div className="flex gap-2">
-                <div className="flex-1 bg-cream3 p-4 rounded-2xl flex items-center gap-3">
-                   <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gold shadow-sm">
+                <div className="flex-1 bg-slate-50 p-4 rounded-xl flex items-center gap-3">
+                   <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-indigo-600 shadow-sm">
                       {result.contexto?.ocasiao?.includes('rom') ? <Heart size={16} /> : result.contexto?.ocasiao?.includes('fest') ? <PartyPopper size={16} /> : <ChefHat size={16} />}
                    </div>
                    <div>
-                     <p className="text-[10px] font-bold uppercase text-text-sub">Contexto Interpretado</p>
-                     <p className="text-xs font-medium text-text-main">{result.contexto?.pedido_interpretado}</p>
+                     <p className="text-[10px] font-bold uppercase text-slate-400">Contexto Interpretado</p>
+                     <p className="text-xs font-bold text-slate-700">{result.contexto?.pedido_interpretado}</p>
                    </div>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <h4 className="text-sm font-bold uppercase tracking-widest text-text-muted flex items-center gap-2">
-                  <Trophy size={14} className="text-gold" />
+                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                  <Trophy size={14} className="text-amber-500" />
                   Sugestões da IA
                 </h4>
                 <div className="space-y-2">
@@ -203,16 +203,16 @@ export function VoiceModal({ inventory, adegaName, onClose, onSelectItem }: Voic
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: i * 0.1 }}
                         onClick={() => item && onSelectItem(item)}
-                        className="w-full bg-white hover:bg-cream2 border border-parchment/20 p-4 rounded-2xl flex items-center gap-4 text-left transition-all group shadow-sm hover:shadow-md"
+                        className="w-full bg-white hover:bg-slate-50 border border-slate-200 p-4 rounded-xl flex items-center gap-4 text-left transition-all group shadow-sm hover:shadow-md"
                       >
-                        <div className="w-8 h-8 rounded-full bg-wine text-white flex items-center justify-center font-serif italic text-lg shadow-inner">
+                        <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-inner">
                           {rank.posicao}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h5 className="font-serif italic font-bold text-text-main truncate">{rank.nome}</h5>
-                          <p className="text-[11px] text-text-sub leading-snug line-clamp-2 mt-1">{rank.motivo}</p>
+                          <h5 className="font-bold text-slate-800 truncate">{rank.nome}</h5>
+                          <p className="text-[11px] text-slate-500 leading-snug line-clamp-2 mt-1 font-medium">{rank.motivo}</p>
                         </div>
-                        <div className="text-xs font-bold text-gold px-2 py-1 bg-gold/5 rounded-lg">
+                        <div className="text-xs font-bold text-amber-500 px-2 py-1 bg-amber-50 rounded-lg">
                           {rank.pontuacao_total}pts
                         </div>
                       </motion.button>

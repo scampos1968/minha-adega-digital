@@ -7,11 +7,12 @@ import { motion } from 'motion/react';
 interface DrinkModalProps {
   item: Wine | Spirit;
   mode: 'wines' | 'spirits';
+  isAdmin: boolean;
   onClose: () => void;
   onSave: (consumptionData: any) => Promise<void>;
 }
 
-export function DrinkModal({ item, mode, onClose, onSave }: DrinkModalProps) {
+export function DrinkModal({ item, mode, isAdmin, onClose, onSave }: DrinkModalProps) {
   const isWine = mode === 'wines';
   const wine = item as Wine;
   const spirit = item as Spirit;
@@ -24,9 +25,16 @@ export function DrinkModal({ item, mode, onClose, onSave }: DrinkModalProps) {
   const [score, setScore] = useState(item.score || 0);
   const [notes, setNotes] = useState('');
   const [occasion, setOccasion] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSave() {
+    if (!isAdmin) {
+      if (password !== 'membeca') {
+        alert('Senha de degustação incorreta.');
+        return;
+      }
+    }
     setLoading(true);
     try {
       const consumption = {
@@ -53,19 +61,19 @@ export function DrinkModal({ item, mode, onClose, onSave }: DrinkModalProps) {
     <ModalShell 
       title={`Degustar: ${item.name}`} 
       onClose={onClose}
-      icon={<GlassWater size={20} className="text-wine" />}
+      icon={<GlassWater size={20} className="text-indigo-600" />}
       footer={
         <>
           <button 
             onClick={onClose}
-            className="flex-1 py-3 px-6 bg-white border border-parchment/60 rounded-xl text-xs font-bold uppercase tracking-widest text-text-sub hover:bg-cream2 transition-all"
+            className="flex-1 py-3 px-6 bg-white border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-all font-sans"
           >
             Cancelar
           </button>
           <button 
             onClick={handleSave}
             disabled={loading}
-            className="flex-1 py-3 px-6 bg-wine text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-md active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 py-3 px-6 bg-indigo-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-md active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 font-sans"
           >
             {loading ? <Sparkles className="animate-pulse" size={14} /> : 'Registrar'}
           </button>
@@ -77,8 +85,8 @@ export function DrinkModal({ item, mode, onClose, onSave }: DrinkModalProps) {
         {isPartial && (
           <div className="space-y-4">
             <div className="flex justify-between items-end">
-              <label className="text-sm font-bold text-text-muted uppercase tracking-wider">Nível Restante</label>
-              <span className="text-2xl font-serif italic text-wine">{level}%</span>
+              <label className="text-sm font-bold text-slate-500 uppercase tracking-wider">Nível Restante</label>
+              <span className="text-2xl font-bold text-indigo-600">{level}%</span>
             </div>
             <div className="relative h-12 flex items-center">
               <input 
@@ -87,17 +95,17 @@ export function DrinkModal({ item, mode, onClose, onSave }: DrinkModalProps) {
                 max={item.level || 100} 
                 value={level} 
                 onChange={(e) => setLevel(parseInt(e.target.value))}
-                className="w-full h-2 bg-cream2 rounded-lg appearance-none cursor-pointer accent-wine"
+                className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
               />
               <div className="absolute top-0 left-0 h-full w-full pointer-events-none flex justify-between px-1">
-                <div className="w-[1px] h-3 bg-parchment/30 mt-1" />
-                <div className="w-[1px] h-3 bg-parchment/30 mt-1" />
-                <div className="w-[1px] h-3 bg-parchment/30 mt-1" />
-                <div className="w-[1px] h-3 bg-parchment/30 mt-1" />
-                <div className="w-[1px] h-3 bg-parchment/30 mt-1" />
+                <div className="w-[1px] h-3 bg-slate-200 mt-1" />
+                <div className="w-[1px] h-3 bg-slate-200 mt-1" />
+                <div className="w-[1px] h-3 bg-slate-200 mt-1" />
+                <div className="w-[1px] h-3 bg-slate-200 mt-1" />
+                <div className="w-[1px] h-3 bg-slate-200 mt-1" />
               </div>
             </div>
-            <p className="text-[10px] text-text-sub flex items-center gap-1.5 italic">
+            <p className="text-[10px] text-slate-400 flex items-center gap-1.5 font-medium">
               <Sparkles size={10} />
               O nível atual da garrafa é {item.level || 100}%. Deslize para registrar quanto restou.
             </p>
@@ -106,7 +114,7 @@ export function DrinkModal({ item, mode, onClose, onSave }: DrinkModalProps) {
 
         {/* Score */}
         <div className="space-y-4">
-          <label className="text-sm font-bold text-text-muted uppercase tracking-wider">Sua Avaliação</label>
+          <label className="text-sm font-bold text-slate-500 uppercase tracking-wider">Sua Avaliação</label>
           <div className="flex gap-2">
             {[1, 2, 3, 4, 5].map((s) => (
               <button
@@ -114,8 +122,8 @@ export function DrinkModal({ item, mode, onClose, onSave }: DrinkModalProps) {
                 onClick={() => setScore(s)}
                 className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-all ${
                   score >= s 
-                    ? 'bg-gold border-gold text-white shadow-md scale-105' 
-                    : 'bg-white border-parchment/40 text-text-muted hover:border-gold/40'
+                    ? 'bg-amber-500 border-amber-500 text-white shadow-md scale-105' 
+                    : 'bg-white border-slate-200 text-slate-400 hover:border-amber-400/40'
                 }`}
               >
                 <Star size={20} fill={score >= s ? 'currentColor' : 'none'} />
@@ -126,16 +134,16 @@ export function DrinkModal({ item, mode, onClose, onSave }: DrinkModalProps) {
 
         {/* Occasion */}
         <div className="space-y-3">
-          <label className="text-sm font-bold text-text-muted uppercase tracking-wider">Ocasião</label>
+          <label className="text-sm font-bold text-slate-500 uppercase tracking-wider">Ocasião</label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {['Jantar', 'Degustação', 'Presente', 'Festa'].map(occ => (
               <button
                 key={occ}
                 onClick={() => setOccasion(occ)}
-                className={`py-2 px-3 rounded-lg text-xs font-semibold border transition-all ${
+                className={`py-2 px-3 rounded-lg text-xs font-bold border transition-all ${
                   occasion === occ 
-                    ? 'bg-wine/10 border-wine text-wine' 
-                    : 'bg-white border-parchment/20 text-text-sub hover:bg-cream2'
+                    ? 'bg-indigo-600 border-indigo-600 text-white' 
+                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                 }`}
               >
                 {occ}
@@ -147,13 +155,13 @@ export function DrinkModal({ item, mode, onClose, onSave }: DrinkModalProps) {
             placeholder="Ou digite outra ocasião..." 
             value={occasion}
             onChange={(e) => setOccasion(e.target.value)}
-            className="w-full bg-white border border-parchment/20 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-wine/10 focus:border-wine outline-none transition-all"
+            className="w-full bg-white border border-slate-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
           />
         </div>
 
         {/* Notes */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-text-muted">
+          <div className="flex items-center gap-2 text-slate-500">
             <MessageSquareCode size={16} />
             <label className="text-sm font-bold uppercase tracking-wider">Notas de Degustação</label>
           </div>
@@ -162,9 +170,22 @@ export function DrinkModal({ item, mode, onClose, onSave }: DrinkModalProps) {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Descreva as sensações, aromas e com que harmonizou..."
-            className="w-full bg-white border border-parchment/20 rounded-2xl py-4 px-5 text-sm focus:ring-2 focus:ring-wine/10 focus:border-wine outline-none transition-all resize-none"
+            className="w-full bg-white border border-slate-200 rounded-xl py-4 px-5 text-sm focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all resize-none"
           />
         </div>
+
+        {!isAdmin && (
+          <div className="space-y-3 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 ml-1">Código de Autorização</label>
+            <input 
+              type="password" 
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="Digite o código da casa"
+              className="w-full bg-white border border-indigo-200 rounded-xl py-3 px-4 text-center font-mono tracking-widest outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500"
+            />
+          </div>
+        )}
       </div>
     </ModalShell>
   );

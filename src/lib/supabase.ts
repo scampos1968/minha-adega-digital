@@ -63,11 +63,19 @@ export async function sbGet<T>(table: string, query: string = '', retries: numbe
       });
       clearTimeout(timeoutId);
       if (!r.ok) {
-        const e = await r.text();
-        throw new Error(`${r.status}: ${e}`);
+        const e = await r.json().catch(() => ({ message: 'Unknown error' }));
+        const msg = e.message || e.error_description || String(e);
+        const error = new Error(msg);
+        (error as any).status = r.status;
+        (error as any).code = e.code;
+        throw error;
       }
       return r.json();
-    } catch (e) {
+    } catch (e: any) {
+      if (e.status === 401 || (e.message && e.message.includes('JWT expired'))) {
+        localStorage.removeItem('adega_session');
+        window.dispatchEvent(new CustomEvent('adega-auth-error', { detail: e.message }));
+      }
       lastErr = e;
       if (attempt < retries) await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
     }
@@ -86,8 +94,13 @@ export async function sbUpsert<T>(table: string, data: any): Promise<T[]> {
     body: JSON.stringify(data),
   });
   if (!r.ok) {
-    const e = await r.text();
-    throw new Error(`${r.status}: ${e}`);
+    const e = await r.json().catch(() => ({ message: 'Unknown error' }));
+    const msg = e.message || e.error_description || String(e);
+    if (r.status === 401 || msg.includes('JWT expired')) {
+      localStorage.removeItem('adega_session');
+      window.dispatchEvent(new CustomEvent('adega-auth-error', { detail: msg }));
+    }
+    throw new Error(`${r.status}: ${JSON.stringify(e)}`);
   }
   return r.json();
 }
@@ -103,8 +116,13 @@ export async function sbPatch<T>(table: string, id: string, data: any): Promise<
     body: JSON.stringify(data),
   });
   if (!r.ok) {
-    const e = await r.text();
-    throw new Error(`${r.status}: ${e}`);
+    const e = await r.json().catch(() => ({ message: 'Unknown error' }));
+    const msg = e.message || e.error_description || String(e);
+    if (r.status === 401 || msg.includes('JWT expired')) {
+      localStorage.removeItem('adega_session');
+      window.dispatchEvent(new CustomEvent('adega-auth-error', { detail: msg }));
+    }
+    throw new Error(`${r.status}: ${JSON.stringify(e)}`);
   }
   return r.json();
 }
@@ -116,8 +134,13 @@ export async function sbDel(table: string, id: string): Promise<void> {
     headers: getHeaders(),
   });
   if (!r.ok) {
-    const e = await r.text();
-    throw new Error(`${r.status}: ${e}`);
+    const e = await r.json().catch(() => ({ message: 'Unknown error' }));
+    const msg = e.message || e.error_description || String(e);
+    if (r.status === 401 || msg.includes('JWT expired')) {
+      localStorage.removeItem('adega_session');
+      window.dispatchEvent(new CustomEvent('adega-auth-error', { detail: msg }));
+    }
+    throw new Error(`${r.status}: ${JSON.stringify(e)}`);
   }
 }
 

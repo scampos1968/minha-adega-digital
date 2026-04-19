@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Wine, Spirit, Adega, Consumption, SpiritConsumption } from './types';
-import { sbGet, sbUpsert, sbPatch, wineFromDB, spiritFromDB, consumptionFromDB, spiritConsumptionFromDB, consumptionToDB, spiritConsumptionToDB, sbLogin } from './lib/supabase';
-import { LogIn, User, Wine as WineIcon, History, RefreshCw, Plus, Mic, Package, Trash2, BookOpen, GlassWater, Settings, X, Search, LogOut, Database } from 'lucide-react';
+import { sbGet, sbUpsert, sbPatch, sbDel, wineFromDB, spiritFromDB, consumptionFromDB, spiritConsumptionFromDB, consumptionToDB, spiritConsumptionToDB, sbLogin } from './lib/supabase';
+import { LogIn, User, Wine as WineIcon, History, RefreshCw, Plus, Mic, Package, Trash2, BookOpen, GlassWater, Settings, X, Search, LogOut, Database, Camera, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { InventoryGrid } from './components/InventoryGrid';
 import { generateExpertSummaryGemini } from './lib/ai';
@@ -33,9 +33,18 @@ export default function App() {
   // Modal state
   const [activeModal, setActiveModal] = useState<'expert' | 'drink' | 'edit' | 'stock' | 'voice' | 'inout' | null>(null);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [scanToken, setScanToken] = useState(0);
 
   useEffect(() => {
     checkSession();
+    
+    // Auth error handling (JWT expired)
+    const handleAuthError = () => {
+      handleLogout();
+      alert('Sua sessão expirou. Por favor, faça login novamente.');
+    };
+    window.addEventListener('adega-auth-error', handleAuthError);
+    return () => window.removeEventListener('adega-auth-error', handleAuthError);
   }, []);
 
   async function checkSession() {
@@ -167,6 +176,19 @@ export default function App() {
     document.body.removeChild(link);
   };
 
+  async function handleDeleteConsumption(id: string, isSpirit: boolean) {
+    if (!isAdmin) return;
+    if (!confirm('Excluir este registro do histórico permanentemente?')) return;
+    setSyncStatus('saving');
+    try {
+      await sbDel(isSpirit ? 'spirit_consumptions' : 'consumptions', id);
+      boot();
+    } catch (e) {
+      console.error(e);
+      setSyncStatus('error');
+    }
+  }
+
   async function handleItemSave(data: any) {
     setSyncStatus('saving');
     try {
@@ -293,7 +315,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col selection:bg-wine/10 selection:text-wine font-sans antialiased">
+    <div className="min-h-screen flex flex-col selection:bg-indigo-100 selection:text-indigo-600 font-sans antialiased">
       <Header 
         mode={mode} 
         setMode={setMode} 
@@ -304,6 +326,11 @@ export default function App() {
         onRefresh={boot}
         onLogout={handleLogout}
         onVoice={() => setActiveModal('voice')}
+        onScan={() => {
+          setSelectedItem(null);
+          setScanToken(prev => prev + 1);
+          setActiveModal('edit');
+        }}
         onAdd={() => { setSelectedItem(null); setActiveModal('edit'); }}
         onInout={() => setActiveModal('inout')}
       />
@@ -316,15 +343,8 @@ export default function App() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
-              className="space-y-8"
+              className="space-y-6"
             >
-              <div className="space-y-1">
-                <h2 className="text-3xl font-serif italic text-text-main">
-                  {mode === 'wines' ? 'Coleção de Vinhos' : 'Destilados & Spirits'}
-                </h2>
-                <p className="text-sm text-text-sub">Gerencie seu inventário e janelas de consumo.</p>
-              </div>
-
               <AdegaTabs 
                 adegas={adegas} 
                 activeId={activeAdega} 
@@ -336,13 +356,11 @@ export default function App() {
               />
 
               {adegas.length === 0 && syncStatus === 'ok' && (
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-500 text-xs italic flex items-center gap-2">
+                <div className="p-4 bg-cream-dark border border-parchment rounded-xl text-text-sub text-xs font-medium flex items-center gap-2">
                   <Package size={14} />
-                  <span>Sincronizado, mas nenhuma adega foi encontrada no banco de dados.</span>
+                  <span>Sincronizado, mas nenhuma adega foi encontrada.</span>
                 </div>
               )}
-
-              <div className="bg-parchment/10 h-[1px] w-full" />
 
               <InventoryGrid 
                 groupedItems={groupedItems}
@@ -360,20 +378,23 @@ export default function App() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
-              className="space-y-8"
+              className="space-y-4"
             >
-              <div className="space-y-1">
-                <h2 className="text-3xl font-serif italic text-text-main">Histórico de Degustações</h2>
-                <p className="text-sm text-text-sub">As memórias líquidas da sua adega.</p>
-              </div>
-
               <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
                 {historyList.length > 0 ? (
                   historyList.map((cons: any) => {
-                    return <ConsumptionCard key={cons.id} consumption={cons} isSpirit={cons.isSpirit} />;
+                    return (
+                      <ConsumptionCard 
+                        key={cons.id} 
+                        consumption={cons} 
+                        isSpirit={cons.isSpirit} 
+                        isAdmin={isAdmin}
+                        onDelete={handleDeleteConsumption}
+                      />
+                    );
                   })
                 ) : (
-                  <div className="col-span-full py-20 text-center text-text-muted italic">
+                  <div className="col-span-full py-20 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">
                     Nenhum registro de consumo encontrado.
                   </div>
                 )}
@@ -396,6 +417,7 @@ export default function App() {
           <DrinkModal 
             item={selectedItem} 
             mode={mode} 
+            isAdmin={isAdmin}
             onSave={handleDrinkSave}
             onClose={() => setActiveModal(null)} 
           />
@@ -419,6 +441,7 @@ export default function App() {
             activeAdegaId={activeAdega}
             onSave={handleItemSave}
             onClose={() => setActiveModal(null)} 
+            autoScan={!selectedItem && scanToken > 0}
           />
         )}
         {activeModal === 'stock' && selectedItem && (
@@ -452,29 +475,29 @@ export default function App() {
 
 function LoadingIndicator() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-cream">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-slate-50">
       <motion.div 
         animate={{ rotate: 360 }}
         transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
-        className="w-20 h-20 border-t-2 border-r-2 border-wine/20 rounded-full flex items-center justify-center"
+        className="w-20 h-20 border-t-2 border-r-2 border-indigo-200 rounded-full flex items-center justify-center"
       >
         <motion.div 
           animate={{ scale: [1, 1.15, 1] }}
           transition={{ repeat: Infinity, duration: 2 }}
-          className="w-12 h-12 bg-wine rounded-2xl flex items-center justify-center text-white text-2xl shadow-sh2"
+          className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg"
         >
           🍷
         </motion.div>
       </motion.div>
       <div className="flex flex-col items-center gap-2">
-        <h2 className="italic text-text-muted text-xl font-serif">Carregando sua adega...</h2>
+        <h2 className="text-slate-400 text-xl font-bold uppercase tracking-widest text-xs">Carregando sua adega...</h2>
         <div className="flex gap-2">
           {[0, 1, 2].map((i) => (
             <motion.span 
               key={i}
               animate={{ opacity: [0.2, 1, 0.2] }}
-              transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.3 }}
-              className="w-1.5 h-1.5 rounded-full bg-wine"
+              transition={{ repeat: Infinity, duration: 1, delay: i * 0.2 }}
+              className="w-1.5 h-1.5 rounded-full bg-indigo-600"
             />
           ))}
         </div>
@@ -505,174 +528,167 @@ function LoginScreen({ onAdminLogin, onGuestLogin }: { onAdminLogin: (token: str
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-8 font-sans overflow-hidden relative">
+    <div className="min-h-screen bg-cream-dark flex flex-col items-center justify-center p-8 font-sans overflow-hidden">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-10 relative z-10"
+        className="text-center mb-10"
       >
-        <div className="w-16 h-16 bg-white rounded-3xl shadow-xl flex items-center justify-center mx-auto mb-6 border border-slate-100">
-          <WineIcon className="text-indigo-600" size={32} />
-        </div>
-        <h1 className="text-4xl font-serif italic text-slate-900 mb-2 tracking-tight">Adega</h1>
-        <div className="text-[10px] text-slate-400 uppercase tracking-[4px] font-bold">Reserva Particular</div>
+        <h1 className="text-[36px] italic text-[#2c1810] mb-1 tracking-tight font-serif">Adega</h1>
+        <div className="text-[11px] text-[#8a6040] uppercase tracking-[3px] font-bold">Coleção Pessoal</div>
       </motion.div>
 
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.1 }}
-        className="bg-white border border-slate-200 rounded-[32px] p-8 w-full max-w-sm shadow-xl space-y-6 relative z-10"
+        className="bg-cream border border-parchment/50 rounded-[20px] p-10 w-full max-w-sm shadow-old space-y-8"
       >
         {!showAdminForm ? (
           <div className="space-y-4">
-            <button 
+             <button 
               onClick={() => setShowAdminForm(true)}
-              className="w-full py-4 px-6 bg-slate-900 text-white rounded-2xl font-bold text-sm tracking-widest uppercase flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-lg active:scale-[0.98]"
+              className="w-full py-4 px-6 bg-[#5a2e14] text-[#f0e8d0] rounded-xl font-serif text-[17px] flex items-center justify-center gap-3 transition-all active:scale-[0.98] relative"
             >
-              <LogIn size={18} />
-              <span>Acesso Admin</span>
+              <LogIn size={16} className="absolute left-6" />
+              <span>Admin</span>
             </button>
 
-            <div className="flex items-center gap-4 py-2 text-slate-300 text-[10px] font-bold uppercase tracking-[2px]">
-              <div className="flex-1 h-[1px] bg-slate-100" />
+            <div className="flex items-center gap-4 py-2 text-text-muted text-[11px] font-bold uppercase tracking-[2px]">
+              <div className="flex-1 h-[0.5px] bg-parchment" />
               <span>ou</span>
-              <div className="flex-1 h-[1px] bg-slate-100" />
+              <div className="flex-1 h-[0.5px] bg-parchment" />
             </div>
 
             <button 
               onClick={onGuestLogin}
-              className="w-full py-4 px-6 bg-white border border-slate-200 text-slate-600 rounded-2xl font-bold text-sm tracking-widest uppercase flex items-center justify-center gap-3 hover:bg-slate-50 transition-all shadow-sm active:scale-[0.98]"
+              className="w-full py-4 px-6 bg-white border border-parchment text-text-main rounded-xl font-serif text-[17px] flex items-center justify-center gap-3 transition-all active:scale-[0.98] relative"
             >
-              <User size={18} className="text-indigo-600" />
-              <span>Acesso Visitante</span>
+              <User size={16} className="absolute left-6" />
+              <span>Guest</span>
             </button>
           </div>
         ) : (
           <form onSubmit={handleAdminSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">E-mail</label>
+              <label className="text-[11px] font-bold text-[#8a6040] uppercase tracking-wider ml-1">E-mail</label>
               <input 
                 autoFocus
                 type="email" 
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
+                className="w-full px-4 py-3 bg-white border border-parchment rounded-lg text-sm focus:outline-none focus:border-brand-wine transition-all"
                 placeholder="seu@email.com"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Senha</label>
+              <label className="text-[11px] font-bold text-[#8a6040] uppercase tracking-wider ml-1">Senha</label>
               <input 
                 type="password" 
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
+                className="w-full px-4 py-3 bg-white border border-parchment rounded-lg text-sm focus:outline-none focus:border-brand-wine transition-all"
                 placeholder="••••••••"
               />
             </div>
 
             {error && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="p-3 bg-red-50 border border-red-100 text-red-600 text-xs rounded-xl italic"
-              >
+              <div className="p-4 bg-red-50 border border-red-100 text-red-600 text-xs rounded-lg font-bold text-center">
                 {error}
-              </motion.div>
+              </div>
             )}
 
             <div className="pt-2 space-y-3">
               <button 
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 px-6 bg-indigo-600 text-white rounded-2xl font-bold text-sm tracking-widest uppercase flex items-center justify-center gap-3 hover:bg-indigo-700 transition-all shadow-lg active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
+                className="w-full py-3.5 px-6 bg-brand-wine text-[#f0e8d0] rounded-xl font-serif text-[16px] flex items-center justify-center gap-3 transition-all disabled:opacity-50"
               >
-                {loading ? <RefreshCw size={18} className="animate-spin" /> : <LogIn size={18} />}
-                <span>Entrar</span>
+                {loading ? <RefreshCw size={18} className="animate-spin" /> : 'Entrar'}
               </button>
               <button 
                 type="button"
                 onClick={() => setShowAdminForm(false)}
-                className="w-full py-3 text-slate-400 text-[10px] font-bold uppercase tracking-widest hover:text-slate-600 transition-colors"
+                className="w-full py-3 text-text-sub text-[11px] font-bold uppercase tracking-widest hover:text-text-main transition-colors"
               >
-                Voltar
+                ← Voltar
               </button>
             </div>
           </form>
         )}
       </motion.div>
-      
-      {/* Decorative Blur */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-[100px] -z-10" />
     </div>
   );
 }
 
-function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, onLogout, onVoice, onAdd, onInout }: any) {
+function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, onLogout, onVoice, onAdd, onInout, onScan }: any) {
   return (
-    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200 h-16 flex items-center shadow-sm">
-      <div className="max-w-7xl mx-auto w-full px-4 md:px-8 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4 md:gap-6">
-          <div className="flex bg-slate-100 p-1 rounded-[14px] border border-slate-200 shadow-inner">
+    <header className="sticky top-0 z-50 bg-cream/94 backdrop-blur-xl border-b border-black/10 h-14.5 flex items-center">
+      <div className="max-w-[1300px] mx-auto w-full px-7 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="flex bg-transparent items-center gap-1.5">
             <button 
               onClick={() => setMode('wines')}
-              className={`p-2 rounded-xl transition-all duration-300 ${mode === 'wines' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'}`}
+              className={`p-1.5 px-2 rounded-lg transition-all duration-300 text-[18px] leading-none ${mode === 'wines' ? 'bg-brand-wine text-white' : 'text-text-muted opacity-40 hover:opacity-100'}`}
               title="Vinhos"
             >
-              <WineIcon size={18} />
+              🍷
             </button>
             <button 
               onClick={() => setMode('spirits')}
-              className={`p-2 rounded-xl transition-all duration-300 ${mode === 'spirits' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'}`}
+              className={`p-1.5 px-2 rounded-lg transition-all duration-300 text-[18px] leading-none ${mode === 'spirits' ? 'bg-[#8B4513] text-white' : 'text-text-muted opacity-40 hover:opacity-100'}`}
               title="Spirits"
             >
-              <GlassWater size={18} />
+              🥃
             </button>
           </div>
           
-          <div className="relative pt-1">
+          <div className="relative flex flex-col justify-center">
             <div className="flex items-center gap-2">
-              <h1 className="font-serif italic text-xl tracking-tight text-slate-800 leading-none">Adega</h1>
+              <h1 className="italic text-[17px] text-text-main font-serif leading-none">Adega</h1>
               {isAdmin && (
-                <span className="text-[8px] bg-slate-900 text-white px-1.5 py-0.5 rounded-md font-bold uppercase tracking-widest">Admin</span>
+                <span className="text-[7px] bg-brand-wine text-white px-1 py-0.5 rounded font-bold uppercase tracking-widest">Admin</span>
               )}
             </div>
-            <div className={`mt-1 flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors ${syncStatus === 'saving' ? 'text-indigo-600' : syncStatus === 'error' ? 'text-red-500' : 'text-emerald-600'}`}>
-              {syncStatus === 'saving' ? <RefreshCw size={10} className="animate-spin" /> : <div className="w-1 h-1 rounded-full bg-current shadow-[0_0_4px_currentColor]" />}
-              <span className="opacity-80">{syncStatus === 'saving' ? 'Salvando' : syncStatus === 'error' ? 'Erro' : 'Sincronizado'}</span>
+            <div className={`flex items-center gap-1 text-[9px] transition-colors font-sans font-medium ${syncStatus === 'saving' ? 'text-brand-gold' : syncStatus === 'error' ? 'text-red-800' : 'text-emerald-700'}`}>
+              {syncStatus === 'saving' ? <RefreshCw size={9} className="animate-spin" /> : <div className="w-1 h-1 rounded-full bg-current" />}
+              <span className="opacity-80">{syncStatus === 'saving' ? 'Salvando…' : syncStatus === 'error' ? 'Erro' : 'Sincronizado'}</span>
             </div>
           </div>
         </div>
 
-        <nav className="flex items-center gap-1.5 md:gap-3">
-          <HeaderBtn icon={<RefreshCw size={16} />} label="Refresh" onClick={onRefresh} />
+        <nav className="flex items-center gap-0.5 md:gap-1 overflow-hidden">
+          <HeaderBtn icon="🔄" label="Refresh" onClick={onRefresh} />
           <HeaderBtn 
             icon={view === 'cellar' ? <History size={16} /> : <WineIcon size={16} />} 
             label={view === 'cellar' ? 'Histórico' : 'Adega'} 
             onClick={() => setView(view === 'cellar' ? 'history' : 'cellar')} 
           />
-          <div className="w-[1px] h-4 bg-slate-200 mx-1 md:mx-2" />
-          <HeaderBtn icon={<Mic size={16} />} label="Voz" onClick={onVoice} className="text-indigo-600 bg-indigo-50 hover:bg-indigo-100" />
           
           {isAdmin && (
-            <HeaderBtn icon={<Database size={16} />} label="IO" onClick={onInout} />
+            <HeaderBtn icon={<Database size={15} />} label="In/Out" onClick={onInout} />
           )}
 
+          <div className="w-[1px] h-4.5 bg-black/10 mx-1 flex-shrink-0" />
+          
+          <HeaderBtn icon={<Mic size={14} />} label="Voz" onClick={onVoice} />
+          <HeaderBtn icon={<Camera size={14} />} label="Scan" onClick={onScan} />
+          
           {isAdmin && (
             <button 
               onClick={onAdd}
-              className="flex items-center gap-2 py-2 px-3 sm:px-5 bg-indigo-600 text-white rounded-[14px] text-xs font-bold uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-md active:scale-95"
+              className="flex items-center gap-1.5 py-2 px-4 ml-1 bg-brand-wine text-white rounded-lg text-[13px] hover:opacity-85 transition-all active:scale-95"
             >
-              <Plus size={16} />
-              <span className="hidden xs:inline sm:inline">Adicionar</span>
+              <Plus size={14} />
+              <span className="hidden sm:inline font-sans">Vinho</span>
             </button>
           )}
           
-          <button onClick={onLogout} title="Sair" className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
-            <LogOut size={18} />
+          <button onClick={onLogout} title="Sair" className="p-2 text-text-sub hover:bg-cream-dark rounded-lg transition-all ml-1 flex-shrink-0">
+             <LogOut size={14} />
+             <span className="hidden md:inline ml-1 text-[12px]">Sair</span>
           </button>
         </nav>
       </div>
@@ -684,10 +700,10 @@ function HeaderBtn({ icon, label, onClick, className }: any) {
   return (
     <button 
       onClick={onClick}
-      className={`flex items-center gap-2.5 p-2.5 px-3 text-slate-500 hover:bg-slate-100 rounded-xl transition-all active:scale-95 group ${className}`}
+      className={`flex items-center gap-1 p-1.5 px-2 text-text-sub hover:bg-cream-dark rounded-lg transition-all group flex-shrink-0 ${className}`}
     >
-      <span className="group-hover:text-indigo-600 transition-colors">{icon}</span>
-      <span className="hidden md:inline text-[10px] font-bold tracking-tight uppercase">{label}</span>
+      <span className="text-[14px] flex items-center">{icon}</span>
+      <span className="hidden md:inline text-[12px] font-sans">{label}</span>
     </button>
   );
 }
@@ -696,7 +712,7 @@ function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }
   const allAdegas = [...adegas, { id: 'all', name: 'Todas as adegas', emoji: '🗂️' }];
   
   return (
-    <div className="flex gap-2 overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+    <div className="flex gap-2.5 overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
       {allAdegas.map((a) => {
         const count = mode === 'wines' 
           ? (a.id === 'all' ? wines.reduce((acc: any, w: any) => acc + w.qty, 0) : wines.filter((w: any) => w.adegaId === a.id).reduce((acc: any, w: any) => acc + w.qty, 0))
@@ -706,24 +722,24 @@ function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }
           <button
             key={a.id}
             onClick={() => onChange(a.id)}
-            className={`flex items-center gap-3 py-2.5 px-5 rounded-2xl border transition-all duration-300 whitespace-nowrap group ${
+            className={`flex items-center gap-2.5 py-2 px-5 rounded-lg border transition-all duration-150 whitespace-nowrap shadow-old font-sans text-[13px] ${
               activeId === a.id 
-                ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg ring-4 ring-indigo-500/10' 
-                : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:bg-slate-50 shadow-sm'
+                ? 'bg-brand-wine text-white border-brand-wine shadow-md' 
+                : 'bg-white text-text-sub border-black/5 hover:bg-cream-dark'
             }`}
           >
-            <span className="text-lg group-hover:scale-110 transition-transform">{a.emoji}</span>
-            <span className="text-sm font-bold tracking-tight">{a.name}</span>
-            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full transition-colors ${activeId === a.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-indigo-100 group-hover:text-indigo-600'}`}>
+            <span>{a.emoji}</span>
+            <span className="font-normal">{a.name}</span>
+            <span className={`text-[11px] px-2 py-0.25 rounded transition-colors ${activeId === a.id ? 'bg-white/20 text-white' : 'bg-cream-dark text-text-sub'}`}>
               {count}
             </span>
           </button>
         );
       })}
       {isAdmin && (
-        <button className="flex items-center gap-3 py-2.5 px-5 rounded-2xl border border-dashed border-slate-300 text-slate-400 hover:border-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all text-sm font-bold italic shrink-0">
+        <button className="flex items-center gap-2 py-2 px-4 rounded-lg border border-dashed border-parchment text-text-muted hover:border-brand-wine hover:text-brand-wine transition-all text-xs font-normal shrink-0 font-sans">
           <Plus size={14} />
-          <span>Nova</span>
+          <span>Nova adega</span>
         </button>
       )}
     </div>
@@ -760,46 +776,45 @@ function ExpertModal({ item, mode, onClose }: any) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="absolute inset-0 bg-text-main/40 backdrop-blur-sm" 
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm" 
       />
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative bg-cream border border-parchment/20 rounded-[32px] w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]"
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        className="relative bg-cream border border-black/10 rounded-[20px] w-full max-w-2xl overflow-hidden shadow-old-lg flex flex-col max-h-[85vh]"
       >
-        <div className="p-6 md:p-8 flex items-start justify-between border-b border-parchment/10 bg-white/50">
+        <div className="p-7 flex items-start justify-between border-b border-black/5">
            <div className="flex gap-4">
              {item.imageUrl ? (
-               <div className="relative group">
-                 <img src={item.imageUrl} className="w-16 h-20 object-cover rounded-xl border border-parchment/20 shadow-sm" />
-                 <div className="absolute inset-0 ring-1 ring-inset ring-white/20 rounded-xl" />
+               <div className="relative">
+                 <img src={item.imageUrl} className="w-[44px] h-[60px] object-cover rounded-lg border border-black/10 shadow-sm" />
                </div>
              ) : (
-               <div className="w-16 h-20 bg-cream2 rounded-xl flex items-center justify-center text-3xl opacity-40">🍷</div>
+               <div className="w-[44px] h-[60px] bg-cream-dark rounded-lg flex items-center justify-center text-2xl opacity-40">{mode === 'spirits' ? '🥃' : '🍷'}</div>
              )}
-             <div className="space-y-1">
-               <h3 className="text-2xl font-serif italic text-text-main leading-tight">{item.name}</h3>
-               <p className="text-sm text-text-muted font-medium">{item.producer} · {item.vintage || item.type}</p>
+             <div className="flex flex-col justify-center">
+               <h3 className="text-[20px] font-serif italic text-text-main leading-tight">{item.name}</h3>
+               <p className="text-[12px] text-text-sub mt-1">{item.producer} {item.vintage && `· ${item.vintage}`} · {item.country}</p>
              </div>
            </div>
-           <button onClick={onClose} className="p-2 hover:bg-cream2 rounded-full transition-colors text-text-sub">
-             <X size={24} />
+           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center bg-cream-dark border border-black/10 rounded-lg hover:bg-cream-deep transition-colors text-text-sub">
+             <X size={18} />
            </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
+        <div className="flex-1 overflow-y-auto p-7">
            {loading ? (
              <div className="py-20 flex flex-col items-center gap-4 text-text-muted">
                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
                  <RefreshCw size={32} className="opacity-40" />
                </motion.div>
-               <p className="italic font-serif">Consultando sommelier digital...</p>
+               <p className="font-normal uppercase tracking-widest text-[10px]">Consultando sommelier digital...</p>
              </div>
            ) : (
-             <div className="prose prose-stone prose-sm max-w-none text-text-main/80 leading-relaxed font-sans">
+             <div className="bg-cream-dark border-l-4 border-brand-wine/20 rounded-xl p-6.5 text-[14px] leading-[1.9] text-text-sub font-sans min-h-[200px]">
                {summary.split('\n').map((para, i) => para.trim() ? (
-                 <p key={i} className={para.startsWith('**') ? 'font-bold text-text-main mt-4 text-base' : 'mt-2'}>
+                 <p key={i} className={para.startsWith('**') ? 'font-bold text-text-main mt-4 mb-1' : 'mb-3'}>
                     {para.replace(/\*\*/g, '')}
                  </p>
                ) : null)}
@@ -807,18 +822,18 @@ function ExpertModal({ item, mode, onClose }: any) {
            )}
         </div>
 
-        <div className="p-6 border-t border-parchment/10 bg-white/50 flex justify-between gap-3">
+        <div className="p-7 pt-4 border-t border-black/5 flex justify-between gap-3 bg-cream-dark/20 text-sans">
           <button 
             onClick={handleGenerate} 
             disabled={loading}
-            className="flex-1 py-3 px-6 bg-white border border-parchment/60 rounded-xl text-xs font-bold uppercase tracking-widest text-gold hover:bg-cream2 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            className="flex-1 py-2.5 px-6 bg-white border border-parchment rounded-lg text-xs font-bold uppercase tracking-widest text-text-main hover:bg-cream-dark transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-            Gerar Nova Análise
+            Gerar Nova
           </button>
           <button 
             onClick={onClose}
-            className="flex-1 py-3 px-6 bg-wine text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-md"
+            className="flex-1 py-2.5 px-6 bg-brand-wine text-[#f0e8d0] rounded-lg text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-sm"
           >
             Fechar
           </button>

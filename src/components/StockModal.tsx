@@ -40,14 +40,14 @@ export function StockModal({ item, mode, allItems, adegas, onClose, onRefresh }:
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         className="relative bg-white border border-slate-200 rounded-[32px] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col"
       >
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+            <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
               <Package size={24} />
             </div>
             <div>
-              <h3 className="text-xl font-serif italic text-slate-900 leading-tight">{item.name}</h3>
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Gestão de Estoque</p>
+              <h3 className="text-xl font-bold text-slate-900 leading-tight">{item.name}</h3>
+              <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Gestão de Estoque</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-400">
@@ -57,13 +57,13 @@ export function StockModal({ item, mode, allItems, adegas, onClose, onRefresh }:
 
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
-              <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Total em Estoque</div>
-              <div className="text-2xl font-serif italic text-indigo-700">{totalQty} unidades</div>
+            <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
+              <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-1">Total em Estoque</div>
+              <div className="text-2xl font-bold text-indigo-700">{totalQty} unidades</div>
             </div>
-            <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+            <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl">
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Localizações</div>
-              <div className="text-2xl font-serif italic text-slate-700">{siblings.length} adegas</div>
+              <div className="text-2xl font-bold text-slate-700">{siblings.length} adegas</div>
             </div>
           </div>
 

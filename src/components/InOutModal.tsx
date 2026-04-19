@@ -34,7 +34,7 @@ export function InOutModal({ onClose, onExport, onImport, onBackup }: InOutModal
         className="relative bg-white border border-slate-200 rounded-[32px] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col"
       >
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="text-2xl font-serif italic text-slate-900 leading-tight">In / Out</h3>
+          <h3 className="text-2xl font-bold text-slate-800 leading-tight">In / Out</h3>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
             <X size={24} />
           </button>

@@ -26,9 +26,9 @@ export function SpiritCard({ spirit, adega, onDrink, onEdit, onDelete, onStock, 
   return (
     <motion.div 
       layout
-      className={`group bg-white rounded-2xl border border-parchment/20 shadow-sh overflow-hidden flex flex-col transition-all hover:shadow-sh2 hover:-translate-y-1 ${!isAvailable ? 'opacity-60' : ''}`}
+      className={`group bg-white rounded-[16px] border border-black/10 shadow-old overflow-hidden flex flex-col transition-all hover:shadow-old-lg hover:-translate-y-1 ${!isAvailable ? 'opacity-[0.55]' : ''}`}
     >
-      <div className={`relative h-48 flex items-center justify-center overflow-hidden bg-slate-100`}>
+      <div className={`relative h-[185px] flex items-center justify-center overflow-hidden bg-cream-dark`}>
         {spirit.imageUrl ? (
           <img 
             src={spirit.imageUrl} 
@@ -38,29 +38,31 @@ export function SpiritCard({ spirit, adega, onDrink, onEdit, onDelete, onStock, 
         ) : (
           <div className="flex flex-col items-center gap-2 opacity-30">
             <span className="text-5xl">🥃</span>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-800">{spirit.type}</span>
+            <span className="text-[11px] font-medium uppercase tracking-[1.2px] text-[#8B4513]">{spirit.type}</span>
           </div>
         )}
+
+        <div className="absolute inset-0 bg-gradient-to-t from-white/70 via-transparent to-transparent pt-[45%]" />
         
-        <div className="absolute inset-0 p-3 flex flex-col justify-between pointer-events-none">
+        <div className="absolute inset-0 p-3 flex flex-col justify-between pointer-events-none z-10">
           <div className="flex justify-between items-start">
-             <div className="bg-white/90 backdrop-blur px-2.5 py-1 rounded-lg text-[11px] font-bold shadow-sm">
+             <div className="bg-white/88 px-2.5 py-1 rounded-[20px] text-[11px] font-medium text-text-main shadow-sm backdrop-blur-sm uppercase">
                 {spirit.type}
               </div>
             {spirit.score && (
-              <div className="bg-white/90 backdrop-blur px-2 py-1 rounded-lg text-[10px] font-bold text-gold flex items-center gap-1 shadow-sm">
-                <Star size={10} fill="currentColor" />
+              <div className="bg-white/88 px-2.5 py-1 rounded-[20px] text-[11px] font-medium text-brand-gold flex items-center gap-1 shadow-sm backdrop-blur-sm">
+                <Star size={11} fill="currentColor" />
                 {spirit.score}
               </div>
             )}
           </div>
           
           <div className="flex justify-between items-end">
-            <div className={`px-2 py-1 rounded-lg text-[9px] font-bold text-white shadow-sm ${getLevelColor(spirit.isOpen ? spirit.level : 100)}`}>
+            <div className={`px-2 py-0.5 rounded-[20px] text-[10px] font-medium text-white shadow-sm backdrop-blur-sm ${getLevelColor(spirit.isOpen ? spirit.level : 100)} opacity-90`}>
               {spirit.isOpen && spirit.level === 0 ? '✓ VAZIA' : `NÍVEL: ${spirit.isOpen ? spirit.level : 100}%`}
             </div>
             {spirit.abv && (
-              <div className="bg-white/90 backdrop-blur px-2 py-1 rounded-lg text-[9px] font-bold text-text-muted">
+              <div className="bg-white/88 px-2 py-0.5 rounded-[20px] text-[9px] font-medium text-text-muted backdrop-blur-sm">
                 {spirit.abv}%
               </div>
             )}
@@ -68,46 +70,46 @@ export function SpiritCard({ spirit, adega, onDrink, onEdit, onDelete, onStock, 
         </div>
       </div>
 
-      <div className="p-4 flex-1 flex flex-col gap-1">
-        <h3 className="font-serif italic text-base leading-tight min-h-[2.5rem] flex items-center">
+      <div className="p-4 pt-3.5 pb-3 flex-1 flex flex-col gap-1 min-h-[110px]">
+        <h3 className="font-serif italic text-text-main text-[15px] leading-tight min-h-[2.5rem] flex items-center">
           {spirit.name}
         </h3>
         {spirit.producer && (
-          <p className="text-xs text-text-muted truncate">{spirit.producer}</p>
+          <p className="text-[12px] text-text-sub truncate">{spirit.producer}</p>
         )}
         {(spirit.country || spirit.aging) && (
-          <p className="text-[10px] text-text-sub flex items-center gap-1">
+          <p className="text-[12px] text-text-muted flex items-center gap-1">
             {spirit.country} {spirit.country && spirit.aging && '·'} {spirit.aging}
           </p>
         )}
         
-        <div className="mt-auto pt-3 flex items-center justify-between border-t border-parchment/10">
-          <div className="flex items-center gap-1.5 text-xs text-text-muted font-medium">
-             <Package size={12} className={spirit.isOpen ? 'text-green-600' : 'text-blue-600'} />
+        <div className="mt-auto pt-2.5 flex items-center justify-between border-t border-black/5">
+          <div className="flex items-center gap-1.5 text-[12px] text-text-sub font-normal">
+             <Package size={13} className={spirit.isOpen ? 'text-emerald-700' : 'text-brand-wine'} />
              <span>{spirit.isOpen ? 'ABERTA' : `${spirit.qty} un.`}</span>
           </div>
           {adega && (
-            <div className="text-[10px] text-text-sub bg-cream2 px-1.5 py-0.5 rounded-md flex items-center gap-1">
+            <div className="text-[11px] text-text-muted font-normal">
               <span>{adega.emoji}</span>
-              <span>{adega.name}</span>
+              <span className="ml-1">{adega.name}</span>
             </div>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-5 border-t border-slate-100 bg-slate-50/30">
+      <div className={`grid ${isAdmin ? 'grid-cols-[0.7fr_1fr_1.8fr_0.7fr_0.7fr]' : 'grid-cols-2'} border-t border-black/10`}>
         {isAdmin ? (
           <>
-            <ActionButton icon={<Edit3 size={11} />} label="Editar" onClick={() => onEdit?.(spirit)} />
-            <ActionButton icon={<BookOpen size={11} />} label="Análise" onClick={() => onExpert?.(spirit)} />
-            <ActionButton icon={<Package size={11} />} label="Estoque" onClick={() => onStock?.(spirit)} />
-            <ActionButton icon={<GlassWater size={11} />} label="Consumo" onClick={() => onDrink?.(spirit)} />
-            <ActionButton icon={<Trash2 size={11} />} label="Apagar" onClick={() => onDelete?.(spirit)} className="text-red-400 hover:text-red-600" />
+            <ActionButton icon={<Edit3 size={12} />} label="Editar" onClick={() => onEdit?.(spirit)} />
+            <ActionButton icon={<BookOpen size={12} />} label="Análise" onClick={() => onExpert?.(spirit)} showLabel />
+            <ActionButton icon={<GlassWater size={12} />} label="Consumo" onClick={() => onDrink?.(spirit)} showLabel />
+            <ActionButton icon={<Package size={12} />} label="Estoque" onClick={() => onStock?.(spirit)} />
+            <ActionButton icon={<Trash2 size={12} />} label="Apagar" onClick={() => onDelete?.(spirit)} className="hover:bg-red-50 hover:text-red-700" />
           </>
         ) : (
           <>
-            <ActionButton icon={<BookOpen size={12} />} label="Análise" onClick={() => onExpert?.(spirit)} className="col-span-2" />
-            <ActionButton icon={<GlassWater size={12} />} label="Consumo" onClick={() => onDrink?.(spirit)} className="col-span-2" />
+            <ActionButton icon={<BookOpen size={13} />} label="Análise" onClick={() => onExpert?.(spirit)} showLabel />
+            <ActionButton icon={<GlassWater size={13} />} label="Consumo" onClick={() => onDrink?.(spirit)} showLabel />
           </>
         )}
       </div>
@@ -115,14 +117,14 @@ export function SpiritCard({ spirit, adega, onDrink, onEdit, onDelete, onStock, 
   );
 }
 
-function ActionButton({ icon, label, onClick, className = '' }: any) {
+function ActionButton({ icon, label, onClick, className = '', showLabel = false }: any) {
   return (
     <button 
       onClick={onClick}
-      className={`p-2.5 flex flex-col items-center justify-center gap-1 text-[9px] font-bold uppercase tracking-wider text-slate-500 hover:bg-slate-100 hover:text-indigo-600 border-r border-slate-100 last:border-r-0 transition-all ${className}`}
+      className={`py-2.5 border-l border-black/10 first:border-l-0 flex items-center justify-center gap-1.5 text-[10px] uppercase font-sans text-text-sub hover:bg-cream-dark transition-colors ${className}`}
     >
-      {icon}
-      <span className="hidden sm:inline-block">{label}</span>
+      <span className="flex items-center">{icon}</span>
+      {(showLabel || window.innerWidth > 640) && <span className="hidden xs:inline">{label}</span>}
     </button>
   );
 }
