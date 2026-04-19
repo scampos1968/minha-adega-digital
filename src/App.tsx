@@ -671,70 +671,75 @@ function LoginScreen({ onAdminLogin, onGuestLogin }: { onAdminLogin: (token: str
 
 function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, onLogout, onVoice, onAdd, onInout, onScan }: any) {
   return (
-    <header className="sticky top-0 z-50 bg-cream/94 backdrop-blur-xl border-b border-black/10 h-14.5 flex items-center">
-      <div className="max-w-[1300px] mx-auto w-full px-7 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 md:gap-4">
-          <div className="flex bg-transparent items-center gap-1.5">
+    <header className="sticky top-0 z-50 bg-cream/96 backdrop-blur-md border-b border-black/5 h-14 flex items-center">
+      <div className="max-w-[1300px] mx-auto w-full px-5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 bg-cream-dark p-1 rounded-lg">
             <button 
               onClick={() => setMode('wines')}
-              className={`p-1.5 px-2 rounded-lg transition-all duration-300 text-[18px] leading-none ${mode === 'wines' ? 'bg-brand-wine text-white' : 'text-text-muted opacity-40 hover:opacity-100'}`}
-              title="Vinhos"
+              className={`w-9 h-8 rounded-md transition-all text-lg flex items-center justify-center ${mode === 'wines' ? 'bg-brand-wine text-white shadow-sm' : 'text-text-muted opacity-40 hover:opacity-100'}`}
             >
               🍷
             </button>
             <button 
               onClick={() => setMode('spirits')}
-              className={`p-1.5 px-2 rounded-lg transition-all duration-300 text-[18px] leading-none ${mode === 'spirits' ? 'bg-[#8B4513] text-white' : 'text-text-muted opacity-40 hover:opacity-100'}`}
-              title="Spirits"
+              className={`w-9 h-8 rounded-md transition-all text-lg flex items-center justify-center ${mode === 'spirits' ? 'bg-[#8B4513] text-white shadow-sm' : 'text-text-muted opacity-40 hover:opacity-100'}`}
             >
               🥃
             </button>
           </div>
           
-          <div className="relative flex flex-col justify-center">
+          <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <h1 className="italic text-[17px] text-text-main font-serif leading-none">Adega</h1>
+              <h1 className="italic text-[19px] text-text-main font-serif leading-none tracking-tight">Adega</h1>
               {isAdmin && (
-                <span className="text-[7px] bg-brand-wine text-white px-1 py-0.5 rounded font-bold uppercase tracking-widest">Admin</span>
+                <span className="text-[8px] bg-[#2c1810] text-[#f0e8d0] px-1.5 py-0.5 rounded font-bold uppercase tracking-widest leading-none">Admin</span>
               )}
             </div>
-            <div className={`flex items-center gap-1 text-[9px] transition-colors font-sans font-medium ${syncStatus === 'saving' ? 'text-brand-gold' : syncStatus === 'error' ? 'text-red-800' : 'text-emerald-700'}`}>
-              {syncStatus === 'saving' ? <RefreshCw size={9} className="animate-spin" /> : <div className="w-1 h-1 rounded-full bg-current" />}
-              <span className="opacity-80">{syncStatus === 'saving' ? 'Salvando…' : syncStatus === 'error' ? 'Erro' : 'Sincronizado'}</span>
+            <div className={`flex items-center gap-1 text-[10px] font-medium font-sans mt-0.5 ${syncStatus === 'saving' ? 'text-brand-gold' : syncStatus === 'error' ? 'text-red-800' : 'text-emerald-600'}`}>
+              <div className={`w-1 h-1 rounded-full ${syncStatus === 'saving' ? 'animate-pulse bg-brand-gold' : 'bg-current'}`} />
+              <span className="opacity-70">{syncStatus === 'saving' ? 'Sincronizando…' : 'Sincronizado'}</span>
             </div>
           </div>
         </div>
 
-        <nav className="flex items-center gap-0.5 md:gap-1 overflow-hidden">
-          <HeaderBtn icon="🔄" label="Refresh" onClick={onRefresh} />
-          <HeaderBtn 
-            icon={view === 'cellar' ? <History size={16} /> : <WineIcon size={16} />} 
-            label={view === 'cellar' ? 'Histórico' : 'Adega'} 
+        <nav className="flex items-center gap-1">
+          <button onClick={onRefresh} className="p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Atualizar">
+            <RefreshCw size={18} className={syncStatus === 'saving' ? 'animate-spin' : ''} />
+          </button>
+          
+          <button 
             onClick={() => setView(view === 'cellar' ? 'history' : 'cellar')} 
-          />
+            className="p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors"
+            title={view === 'cellar' ? 'Histórico' : 'Adega'}
+          >
+            <History size={18} />
+          </button>
           
           {isAdmin && (
-            <HeaderBtn icon={<Database size={15} />} label="In/Out" onClick={onInout} />
+            <button onClick={onInout} className="p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Banco de dados">
+              <Database size={18} />
+            </button>
           )}
 
-          <div className="w-[1px] h-4.5 bg-black/10 mx-1 flex-shrink-0" />
-          
-          <HeaderBtn icon={<Mic size={14} />} label="Voz" onClick={onVoice} />
-          <HeaderBtn icon={<Camera size={14} />} label="Scan" onClick={onScan} />
-          
+          <button onClick={onVoice} className="p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Voz">
+            <Mic size={18} />
+          </button>
+
+          <div className="w-[1px] h-4 bg-black/5 mx-1" />
+
           {isAdmin && (
             <button 
               onClick={onAdd}
-              className="flex items-center gap-1.5 py-2 px-4 ml-1 bg-brand-wine text-white rounded-lg text-[13px] hover:opacity-85 transition-all active:scale-95"
+              className="p-2 text-brand-wine hover:bg-brand-wine/5 rounded-full transition-colors"
+              title="Adicionar item"
             >
-              <Plus size={14} />
-              <span className="hidden sm:inline font-sans">Vinho</span>
+              <Plus size={18} />
             </button>
           )}
           
-          <button onClick={onLogout} title="Sair" className="p-2 text-text-sub hover:bg-cream-dark rounded-lg transition-all ml-1 flex-shrink-0">
-             <LogOut size={14} />
-             <span className="hidden md:inline ml-1 text-[12px]">Sair</span>
+          <button onClick={onLogout} className="p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Sair">
+             <LogOut size={16} />
           </button>
         </nav>
       </div>
@@ -755,10 +760,10 @@ function HeaderBtn({ icon, label, onClick, className }: any) {
 }
 
 function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }: any) {
-  const allAdegas = [...adegas, { id: 'all', name: 'Todas as adegas', emoji: '🗂️' }];
+  const allAdegas = [{ id: 'all', name: 'Todas', emoji: '🏢' }, ...adegas];
   
   return (
-    <div className="flex gap-2.5 overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+    <div className="flex gap-4 overflow-x-auto pb-4 -mx-7 px-7 md:mx-0 md:px-0 scrollbar-hide">
       {allAdegas.map((a) => {
         const count = mode === 'wines' 
           ? (a.id === 'all' ? wines.reduce((acc: any, w: any) => acc + w.qty, 0) : wines.filter((w: any) => w.adegaId === a.id).reduce((acc: any, w: any) => acc + w.qty, 0))
@@ -768,24 +773,24 @@ function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }
           <button
             key={a.id}
             onClick={() => onChange(a.id)}
-            className={`flex items-center gap-2.5 py-2 px-5 rounded-lg border transition-all duration-150 whitespace-nowrap shadow-old font-sans text-[13px] ${
+            className={`flex items-center gap-3 py-2.5 px-4 rounded-[12px] border transition-all duration-200 whitespace-nowrap shadow-sm font-sans text-[14px] ${
               activeId === a.id 
-                ? 'bg-brand-wine text-white border-brand-wine shadow-md' 
-                : 'bg-white text-text-sub border-black/5 hover:bg-cream-dark'
+                ? 'bg-brand-wine text-white border-brand-wine shadow-md ring-2 ring-brand-wine/10' 
+                : 'bg-white text-text-sub border-black/5 hover:border-black/10'
             }`}
           >
-            <span>{a.emoji}</span>
-            <span className="font-normal">{a.name}</span>
-            <span className={`text-[11px] px-2 py-0.25 rounded transition-colors ${activeId === a.id ? 'bg-white/20 text-white' : 'bg-cream-dark text-text-sub'}`}>
+            <span className="text-[16px]">{a.emoji}</span>
+            <span className="font-semibold">{a.name}</span>
+            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md transition-colors ml-1 ${activeId === a.id ? 'bg-white/20 text-white' : 'bg-cream-dark text-text-muted'}`}>
               {count}
             </span>
           </button>
         );
       })}
       {isAdmin && (
-        <button className="flex items-center gap-2 py-2 px-4 rounded-lg border border-dashed border-parchment text-text-muted hover:border-brand-wine hover:text-brand-wine transition-all text-xs font-normal shrink-0 font-sans">
+        <button className="flex items-center gap-2 py-2 px-4 rounded-[12px] border border-dashed border-parchment text-text-muted hover:border-brand-wine hover:text-brand-wine transition-all text-xs font-medium shrink-0 font-sans shadow-sm bg-white/50">
           <Plus size={14} />
-          <span>Nova adega</span>
+          <span>Nova</span>
         </button>
       )}
     </div>

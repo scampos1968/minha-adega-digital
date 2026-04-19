@@ -125,10 +125,14 @@ export function InventoryGrid({ groupedItems, mode, adegas, isAdmin, groupBy, on
 
           <button 
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all text-[12px] font-medium ${showFilters ? 'bg-brand-wine text-white border-brand-wine shadow-sm' : 'bg-white border-black/10 text-text-sub hover:bg-cream-dark'}`}
+            className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-all ${
+              showFilters 
+                ? 'bg-brand-wine text-white border-brand-wine shadow-sm' 
+                : 'bg-white border-black/10 text-text-sub hover:bg-cream-dark shadow-sm'
+            }`}
+            title="Filtrar adega"
           >
-            <Filter size={14} />
-            <span className="hidden xs:inline">Filtros</span>
+            <Filter size={18} />
           </button>
         </div>
       </div>
