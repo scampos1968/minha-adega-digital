@@ -51,7 +51,7 @@ Estrutura obrigatória:
 [curiosidades sobre o terroir ou destilação]
 
 **Pontuações**
-[liste publicações reais se encontradas, formato: "Fonte: XX pts"]
+[liste publicações reais se encontradas, formato: "Nota: XX pts - Fonte"]
 
 Dados:
 ${details}`;

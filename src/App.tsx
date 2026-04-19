@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Wine, Spirit, Adega, Consumption, SpiritConsumption } from './types';
 import { sbGet, sbUpsert, sbPatch, sbDel, wineFromDB, spiritFromDB, consumptionFromDB, spiritConsumptionFromDB, consumptionToDB, spiritConsumptionToDB, sbLogin } from './lib/supabase';
-import { LogIn, User, Wine as WineIcon, History, RefreshCw, Plus, Mic, Package, Trash2, BookOpen, GlassWater, Settings, X, Search, LogOut, Database, Camera, Star } from 'lucide-react';
+import { LogIn, User, Wine as WineIcon, History, RefreshCw, Plus, Mic, Package, Trash2, BookOpen, GlassWater, Settings, X, Search, LogOut, Database, Camera, Star, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { InventoryGrid } from './components/InventoryGrid';
 import { generateExpertSummaryGemini } from './lib/ai';
@@ -17,7 +17,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [view, setView] = useState<'cellar' | 'history'>('cellar');
+  const [view, setView] = useState<'cellar' | 'history' | 'expert'>('cellar');
   const [mode, setMode] = useState<'wines' | 'spirits'>('wines');
   const [adegas, setAdegas] = useState<Adega[]>([]);
   const [wines, setWines] = useState<Wine[]>([]);
@@ -144,7 +144,7 @@ export default function App() {
        }
     },
     onStock: (item: any) => { setSelectedItem(item); setActiveModal('stock'); },
-    onExpert: (item: any) => { setSelectedItem(item); setActiveModal('expert'); },
+    onExpert: (item: any) => { setSelectedItem(item); setView('expert'); },
     onInout: () => setActiveModal('inout'),
   };
 
@@ -297,6 +297,27 @@ export default function App() {
     }
   }
 
+  async function handleUpdateScore(item: Wine | Spirit, newScore: number) {
+    if (!isAdmin) return;
+    setSyncStatus('saving');
+    try {
+      const isSpirit = mode === 'spirits';
+      const table = isSpirit ? 'spirits' : 'wines';
+      await sbPatch(table, item.id, { score: newScore });
+      
+      if (isSpirit) {
+        setSpirits(prev => prev.map(s => s.id === item.id ? { ...s, score: newScore } : s));
+      } else {
+        setWines(prev => prev.map(w => w.id === item.id ? { ...w, score: newScore } : w));
+      }
+      setSyncStatus('ok');
+    } catch (e) {
+      console.error(e);
+      setSyncStatus('error');
+      throw e;
+    }
+  }
+
   // Combine and sort history
   const historyList = useMemo(() => {
     const list = [
@@ -372,7 +393,7 @@ export default function App() {
                 {...handlers}
               />
             </motion.div>
-          ) : (
+          ) : view === 'history' ? (
             <motion.div 
               key="history"
               initial={{ opacity: 0, y: 15 }}
@@ -400,19 +421,29 @@ export default function App() {
                 )}
               </div>
             </motion.div>
+          ) : (
+            <motion.div
+              key="expert"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              {selectedItem && (
+                <ExpertView 
+                  item={selectedItem} 
+                  mode={mode} 
+                  onClose={() => setView('cellar')} 
+                  onUpdateScore={handleUpdateScore}
+                  isAdmin={isAdmin}
+                />
+              )}
+            </motion.div>
           )}
         </AnimatePresence>
       </main>
 
       {/* Modals */}
       <AnimatePresence>
-        {activeModal === 'expert' && selectedItem && (
-          <ExpertModal 
-            item={selectedItem} 
-            mode={mode} 
-            onClose={() => setActiveModal(null)} 
-          />
-        )}
         {activeModal === 'drink' && selectedItem && (
           <DrinkModal 
             item={selectedItem} 
@@ -624,73 +655,91 @@ function LoginScreen({ onAdminLogin, onGuestLogin }: { onAdminLogin: (token: str
 }
 
 function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, onLogout, onVoice, onAdd, onInout, onScan }: any) {
+  const isExpertView = view === 'expert';
+  
   return (
     <header className="sticky top-0 z-50 bg-cream/94 backdrop-blur-xl border-b border-black/10 h-14.5 flex items-center">
       <div className="max-w-[1300px] mx-auto w-full px-7 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 md:gap-4">
-          <div className="flex bg-transparent items-center gap-1.5">
+          {isExpertView ? (
             <button 
-              onClick={() => setMode('wines')}
-              className={`p-1.5 px-2 rounded-lg transition-all duration-300 text-[18px] leading-none ${mode === 'wines' ? 'bg-brand-wine text-white' : 'text-text-muted opacity-40 hover:opacity-100'}`}
-              title="Vinhos"
+              onClick={() => setView('cellar')}
+              className="flex items-center gap-2 py-2 px-3 bg-cream-dark border border-black/10 rounded-lg text-text-main hover:bg-cream-deep transition-all group"
             >
-              🍷
+              <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
+              <span className="text-[13px] font-sans font-medium">Voltar</span>
             </button>
-            <button 
-              onClick={() => setMode('spirits')}
-              className={`p-1.5 px-2 rounded-lg transition-all duration-300 text-[18px] leading-none ${mode === 'spirits' ? 'bg-[#8B4513] text-white' : 'text-text-muted opacity-40 hover:opacity-100'}`}
-              title="Spirits"
-            >
-              🥃
-            </button>
-          </div>
-          
-          <div className="relative flex flex-col justify-center">
-            <div className="flex items-center gap-2">
-              <h1 className="italic text-[17px] text-text-main font-serif leading-none">Adega</h1>
-              {isAdmin && (
-                <span className="text-[7px] bg-brand-wine text-white px-1 py-0.5 rounded font-bold uppercase tracking-widest">Admin</span>
-              )}
-            </div>
-            <div className={`flex items-center gap-1 text-[9px] transition-colors font-sans font-medium ${syncStatus === 'saving' ? 'text-brand-gold' : syncStatus === 'error' ? 'text-red-800' : 'text-emerald-700'}`}>
-              {syncStatus === 'saving' ? <RefreshCw size={9} className="animate-spin" /> : <div className="w-1 h-1 rounded-full bg-current" />}
-              <span className="opacity-80">{syncStatus === 'saving' ? 'Salvando…' : syncStatus === 'error' ? 'Erro' : 'Sincronizado'}</span>
-            </div>
-          </div>
+          ) : (
+            <>
+              <div className="flex bg-transparent items-center gap-1.5">
+                <button 
+                  onClick={() => setMode('wines')}
+                  className={`p-1.5 px-2 rounded-lg transition-all duration-300 text-[18px] leading-none ${mode === 'wines' ? 'bg-brand-wine text-white' : 'text-text-muted opacity-40 hover:opacity-100'}`}
+                  title="Vinhos"
+                >
+                  🍷
+                </button>
+                <button 
+                  onClick={() => setMode('spirits')}
+                  className={`p-1.5 px-2 rounded-lg transition-all duration-300 text-[18px] leading-none ${mode === 'spirits' ? 'bg-[#8B4513] text-white' : 'text-text-muted opacity-40 hover:opacity-100'}`}
+                  title="Spirits"
+                >
+                  🥃
+                </button>
+              </div>
+              
+              <div className="relative flex flex-col justify-center">
+                <div className="flex items-center gap-2">
+                  <h1 className="italic text-[17px] text-text-main font-serif leading-none">Adega</h1>
+                  {isAdmin && (
+                    <span className="text-[7px] bg-brand-wine text-white px-1 py-0.5 rounded font-bold uppercase tracking-widest">Admin</span>
+                  )}
+                </div>
+                <div className={`flex items-center gap-1 text-[9px] transition-colors font-sans font-medium ${syncStatus === 'saving' ? 'text-brand-gold' : syncStatus === 'error' ? 'text-red-800' : 'text-emerald-700'}`}>
+                  {syncStatus === 'saving' ? <RefreshCw size={9} className="animate-spin" /> : <div className="w-1 h-1 rounded-full bg-current" />}
+                  <span className="opacity-80">{syncStatus === 'saving' ? 'Salvando…' : syncStatus === 'error' ? 'Erro' : 'Sincronizado'}</span>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
-        <nav className="flex items-center gap-0.5 md:gap-1 overflow-hidden">
-          <HeaderBtn icon="🔄" label="Refresh" onClick={onRefresh} />
-          <HeaderBtn 
-            icon={view === 'cellar' ? <History size={16} /> : <WineIcon size={16} />} 
-            label={view === 'cellar' ? 'Histórico' : 'Adega'} 
-            onClick={() => setView(view === 'cellar' ? 'history' : 'cellar')} 
-          />
-          
-          {isAdmin && (
-            <HeaderBtn icon={<Database size={15} />} label="In/Out" onClick={onInout} />
-          )}
+        {isExpertView ? (
+          <div className="text-center font-serif italic text-text-main text-[16px]">Análise do Especialista</div>
+        ) : (
+          <nav className="flex items-center gap-0.5 md:gap-1 overflow-hidden">
+            <HeaderBtn icon="🔄" label="Refresh" onClick={onRefresh} />
+            <HeaderBtn 
+              icon={view === 'cellar' ? <History size={16} /> : <WineIcon size={16} />} 
+              label={view === 'cellar' ? 'Histórico' : 'Adega'} 
+              onClick={() => setView(view === 'cellar' ? 'history' : 'cellar')} 
+            />
+            
+            {isAdmin && (
+              <HeaderBtn icon={<Database size={15} />} label="In/Out" onClick={onInout} />
+            )}
 
-          <div className="w-[1px] h-4.5 bg-black/10 mx-1 flex-shrink-0" />
-          
-          <HeaderBtn icon={<Mic size={14} />} label="Voz" onClick={onVoice} />
-          <HeaderBtn icon={<Camera size={14} />} label="Scan" onClick={onScan} />
-          
-          {isAdmin && (
-            <button 
-              onClick={onAdd}
-              className="flex items-center gap-1.5 py-2 px-4 ml-1 bg-brand-wine text-white rounded-lg text-[13px] hover:opacity-85 transition-all active:scale-95"
-            >
-              <Plus size={14} />
-              <span className="hidden sm:inline font-sans">Vinho</span>
+            <div className="w-[1px] h-4.5 bg-black/10 mx-1 flex-shrink-0" />
+            
+            <HeaderBtn icon={<Mic size={14} />} label="Voz" onClick={onVoice} />
+            <HeaderBtn icon={<Camera size={14} />} label="Scan" onClick={onScan} />
+            
+            {isAdmin && (
+              <button 
+                onClick={onAdd}
+                className="flex items-center gap-1.5 py-2 px-4 ml-1 bg-brand-wine text-white rounded-lg text-[13px] hover:opacity-85 transition-all active:scale-95"
+              >
+                <Plus size={14} />
+                <span className="hidden sm:inline font-sans">Vinho</span>
+              </button>
+            )}
+            
+            <button onClick={onLogout} title="Sair" className="p-2 text-text-sub hover:bg-cream-dark rounded-lg transition-all ml-1 flex-shrink-0">
+               <LogOut size={14} />
+               <span className="hidden md:inline ml-1 text-[12px]">Sair</span>
             </button>
-          )}
-          
-          <button onClick={onLogout} title="Sair" className="p-2 text-text-sub hover:bg-cream-dark rounded-lg transition-all ml-1 flex-shrink-0">
-             <LogOut size={14} />
-             <span className="hidden md:inline ml-1 text-[12px]">Sair</span>
-          </button>
-        </nav>
+          </nav>
+        )}
       </div>
     </header>
   );
@@ -746,9 +795,16 @@ function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }
   );
 }
 
-function ExpertModal({ item, mode, onClose }: any) {
+function ExpertView({ item, mode, onClose, onUpdateScore, isAdmin }: any) {
   const [summary, setSummary] = useState(item.expertSummary || '');
   const [loading, setLoading] = useState(!item.expertSummary);
+  const [savingScore, setSavingScore] = useState(false);
+  
+  const detectedScore = useMemo(() => {
+    if (!summary) return null;
+    const match = summary.match(/Nota:\s*(\d{2,3})/i);
+    return match ? parseInt(match[1]) : null;
+  }, [summary]);
   
   useEffect(() => {
     if (!item.expertSummary) {
@@ -769,74 +825,110 @@ function ExpertModal({ item, mode, onClose }: any) {
     }
   }
 
+  async function handleSaveScore() {
+    if (!detectedScore || !onUpdateScore) return;
+    setSavingScore(true);
+    try {
+      await onUpdateScore(item, detectedScore);
+      alert(`Nota ${detectedScore} aplicada com sucesso!`);
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao salvar nota.');
+    } finally {
+      setSavingScore(false);
+    }
+  }
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="max-w-2xl mx-auto py-4">
       <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm" 
-      />
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        initial={{ opacity: 0, scale: 0.98, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        className="relative bg-cream border border-black/10 rounded-[20px] w-full max-w-2xl overflow-hidden shadow-old-lg flex flex-col max-h-[85vh]"
+        className="bg-cream border border-black/10 rounded-[20px] shadow-old-lg flex flex-col"
       >
-        <div className="p-7 flex items-start justify-between border-b border-black/5">
-           <div className="flex gap-4">
-             {item.imageUrl ? (
-               <div className="relative">
-                 <img src={item.imageUrl} className="w-[44px] h-[60px] object-cover rounded-lg border border-black/10 shadow-sm" />
-               </div>
-             ) : (
-               <div className="w-[44px] h-[60px] bg-cream-dark rounded-lg flex items-center justify-center text-2xl opacity-40">{mode === 'spirits' ? '🥃' : '🍷'}</div>
-             )}
-             <div className="flex flex-col justify-center">
-               <h3 className="text-[20px] font-serif italic text-text-main leading-tight">{item.name}</h3>
-               <p className="text-[12px] text-text-sub mt-1">{item.producer} {item.vintage && `· ${item.vintage}`} · {item.country}</p>
+        <div className="p-7 flex items-center gap-6 border-b border-black/5 bg-white/30">
+           {item.imageUrl ? (
+             <img src={item.imageUrl} className="w-[60px] h-[80px] object-cover rounded-lg border border-black/10 shadow-sm shrink-0" />
+           ) : (
+             <div className="w-[60px] h-[80px] bg-cream-dark rounded-lg flex items-center justify-center text-3xl opacity-40 shrink-0">{mode === 'spirits' ? '🥃' : '🍷'}</div>
+           )}
+           <div className="flex flex-col justify-center overflow-hidden">
+             <div className="flex items-center gap-2">
+               <h3 className="text-[24px] font-serif italic text-text-main leading-tight truncate">{item.name}</h3>
+               {item.score && (
+                 <span className="bg-brand-wine text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{item.score} pts</span>
+               )}
              </div>
+             <p className="text-[13px] text-brand-gold font-medium mt-1 uppercase tracking-wider">{item.producer} {item.vintage && `· ${item.vintage}`}</p>
+             <p className="text-[12px] text-text-muted mt-0.5">{item.type} · {item.country} · {item.region}</p>
            </div>
-           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center bg-cream-dark border border-black/10 rounded-lg hover:bg-cream-deep transition-colors text-text-sub">
-             <X size={18} />
-           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-7">
+        <div className="p-7 pt-8">
            {loading ? (
-             <div className="py-20 flex flex-col items-center gap-4 text-text-muted">
+             <div className="py-24 flex flex-col items-center gap-5 text-text-muted">
                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
-                 <RefreshCw size={32} className="opacity-40" />
+                 <RefreshCw size={40} className="stroke-[1.5px] opacity-30" />
                </motion.div>
-               <p className="font-normal uppercase tracking-widest text-[10px]">Consultando sommelier digital...</p>
+               <div className="text-center space-y-1">
+                 <p className="font-medium uppercase tracking-[2px] text-[10px]">Sommelier Digital</p>
+                 <p className="text-xs opacity-60">Consultando base de dados enológica...</p>
+               </div>
              </div>
            ) : (
-             <div className="bg-cream-dark border-l-4 border-brand-wine/20 rounded-xl p-6.5 text-[14px] leading-[1.9] text-text-sub font-sans min-h-[200px]">
-               {summary.split('\n').map((para, i) => para.trim() ? (
-                 <p key={i} className={para.startsWith('**') ? 'font-bold text-text-main mt-4 mb-1' : 'mb-3'}>
-                    {para.replace(/\*\*/g, '')}
-                 </p>
-               ) : null)}
+             <div className="space-y-6">
+                <div className="bg-cream-dark border-l-4 border-brand-wine/20 rounded-xl p-7 text-[15px] leading-[1.8] text-text-sub font-sans min-h-[300px] shadow-inner-sm">
+                  {summary.split('\n').map((para, i) => para.trim() ? (
+                    <p key={i} className={para.startsWith('**') ? 'font-bold text-text-main mt-5 mb-2 first:mt-0 text-[16px]' : 'mb-4 last:mb-0'}>
+                        {para.replace(/\*\*/g, '')}
+                    </p>
+                  ) : null)}
+                </div>
+
+                {detectedScore && isAdmin && item.score !== detectedScore && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-5 bg-brand-gold/5 border border-brand-gold/20 rounded-xl flex items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-brand-gold text-white flex items-center justify-center font-serif italic text-lg shadow-sm">
+                        {detectedScore}
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-[13px] font-bold text-text-main leading-none">Nota Detectada</p>
+                        <p className="text-[11px] text-text-sub">Deseja aplicar esta nota ao inventário?</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={handleSaveScore}
+                      disabled={savingScore}
+                      className="px-5 py-2.5 bg-brand-gold text-white rounded-lg text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all flex items-center gap-2 shadow-sm disabled:opacity-50"
+                    >
+                      {savingScore ? <RefreshCw size={12} className="animate-spin" /> : <Star size={12} fill="currentColor" />}
+                      Aplicar Nota
+                    </button>
+                  </motion.div>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <button 
+                    onClick={handleGenerate} 
+                    disabled={loading}
+                    className="flex-1 py-3 px-6 bg-white border border-parchment rounded-xl text-[11px] font-bold uppercase tracking-widest text-text-main hover:bg-cream-dark transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
+                  >
+                    <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                    Regerar Análise
+                  </button>
+                  <button 
+                    onClick={onClose}
+                    className="flex-1 py-3 px-6 bg-brand-wine text-[#f0e8d0] rounded-xl text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-md"
+                  >
+                    Voltar para adega
+                  </button>
+                </div>
              </div>
            )}
-        </div>
-
-        <div className="p-7 pt-4 border-t border-black/5 flex justify-between gap-3 bg-cream-dark/20 text-sans">
-          <button 
-            onClick={handleGenerate} 
-            disabled={loading}
-            className="flex-1 py-2.5 px-6 bg-white border border-parchment rounded-lg text-xs font-bold uppercase tracking-widest text-text-main hover:bg-cream-dark transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-            Gerar Nova
-          </button>
-          <button 
-            onClick={onClose}
-            className="flex-1 py-2.5 px-6 bg-brand-wine text-[#f0e8d0] rounded-lg text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-sm"
-          >
-            Fechar
-          </button>
         </div>
       </motion.div>
     </div>
