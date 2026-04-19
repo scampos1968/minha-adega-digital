@@ -671,74 +671,74 @@ function LoginScreen({ onAdminLogin, onGuestLogin }: { onAdminLogin: (token: str
 
 function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, onLogout, onVoice, onAdd, onInout, onScan }: any) {
   return (
-    <header className="sticky top-0 z-50 bg-cream/96 backdrop-blur-md border-b border-black/5 h-14 flex items-center">
-      <div className="max-w-[1300px] mx-auto w-full px-5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 bg-cream-dark p-1 rounded-lg">
+    <header className="sticky top-0 z-50 bg-cream/96 backdrop-blur-md border-b border-black/5 h-auto py-2 flex items-center">
+      <div className="max-w-[1300px] mx-auto w-full px-4 flex flex-wrap items-center justify-between gap-y-2">
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-0.5 bg-cream-dark p-1 rounded-lg">
             <button 
               onClick={() => setMode('wines')}
-              className={`w-9 h-8 rounded-md transition-all text-lg flex items-center justify-center ${mode === 'wines' ? 'bg-brand-wine text-white shadow-sm' : 'text-text-muted opacity-40 hover:opacity-100'}`}
+              className={`w-8 h-7 rounded-md transition-all text-base flex items-center justify-center ${mode === 'wines' ? 'bg-brand-wine text-white shadow-sm' : 'text-text-muted opacity-40 hover:opacity-100'}`}
             >
               🍷
             </button>
             <button 
               onClick={() => setMode('spirits')}
-              className={`w-9 h-8 rounded-md transition-all text-lg flex items-center justify-center ${mode === 'spirits' ? 'bg-[#8B4513] text-white shadow-sm' : 'text-text-muted opacity-40 hover:opacity-100'}`}
+              className={`w-8 h-7 rounded-md transition-all text-base flex items-center justify-center ${mode === 'spirits' ? 'bg-[#8B4513] text-white shadow-sm' : 'text-text-muted opacity-40 hover:opacity-100'}`}
             >
               🥃
             </button>
           </div>
           
           <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <h1 className="italic text-[19px] text-text-main font-serif leading-none tracking-tight">Adega</h1>
+            <div className="flex items-center gap-1.5">
+              <h1 className="italic text-[17px] sm:text-[19px] text-text-main font-serif leading-none tracking-tight">Adega</h1>
               {isAdmin && (
-                <span className="text-[8px] bg-[#2c1810] text-[#f0e8d0] px-1.5 py-0.5 rounded font-bold uppercase tracking-widest leading-none">Admin</span>
+                <span className="text-[7px] bg-[#2c1810] text-[#f0e8d0] px-1 py-0.5 rounded font-bold uppercase tracking-widest leading-none hidden xs:inline-block">Admin</span>
               )}
             </div>
-            <div className={`flex items-center gap-1 text-[10px] font-medium font-sans mt-0.5 ${syncStatus === 'saving' ? 'text-brand-gold' : syncStatus === 'error' ? 'text-red-800' : 'text-emerald-600'}`}>
+            <div className={`flex items-center gap-1 text-[9px] font-medium font-sans mt-0.5 ${syncStatus === 'saving' ? 'text-brand-gold' : syncStatus === 'error' ? 'text-red-800' : 'text-emerald-600'}`}>
               <div className={`w-1 h-1 rounded-full ${syncStatus === 'saving' ? 'animate-pulse bg-brand-gold' : 'bg-current'}`} />
-              <span className="opacity-70">{syncStatus === 'saving' ? 'Sincronizando…' : 'Sincronizado'}</span>
+              <span className="opacity-70">{syncStatus === 'saving' ? 'Sync…' : 'Sincronizado'}</span>
             </div>
           </div>
         </div>
 
-        <nav className="flex items-center gap-1">
-          <button onClick={onRefresh} className="p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Atualizar">
-            <RefreshCw size={18} className={syncStatus === 'saving' ? 'animate-spin' : ''} />
+        <nav className="flex items-center gap-0.5 sm:gap-1">
+          <button onClick={onRefresh} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Atualizar">
+            <RefreshCw size={16} className={syncStatus === 'saving' ? 'animate-spin' : ''} />
           </button>
           
           <button 
             onClick={() => setView(view === 'cellar' ? 'history' : 'cellar')} 
-            className="p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors"
+            className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors"
             title={view === 'cellar' ? 'Histórico' : 'Adega'}
           >
-            <History size={18} />
+            <History size={16} />
           </button>
           
           {isAdmin && (
-            <button onClick={onInout} className="p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Banco de dados">
-              <Database size={18} />
+            <button onClick={onInout} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Banco de dados">
+              <Database size={16} />
             </button>
           )}
 
-          <button onClick={onVoice} className="p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Voz">
-            <Mic size={18} />
+          <button onClick={onVoice} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Voz">
+            <Mic size={16} />
           </button>
 
-          <div className="w-[1px] h-4 bg-black/5 mx-1" />
+          <div className="w-[1px] h-4 bg-black/5 mx-0.5 sm:mx-1" />
 
           {isAdmin && (
             <button 
               onClick={onAdd}
-              className="p-2 text-brand-wine hover:bg-brand-wine/5 rounded-full transition-colors"
+              className="p-1.5 sm:p-2 text-brand-wine hover:bg-brand-wine/5 rounded-full transition-colors"
               title="Adicionar item"
             >
               <Plus size={18} />
             </button>
           )}
           
-          <button onClick={onLogout} className="p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Sair">
+          <button onClick={onLogout} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Sair">
              <LogOut size={16} />
           </button>
         </nav>
@@ -751,7 +751,7 @@ function HeaderBtn({ icon, label, onClick, className }: any) {
   return (
     <button 
       onClick={onClick}
-      className={`flex items-center gap-1 p-1.5 px-2 text-text-sub hover:bg-cream-dark rounded-lg transition-all group flex-shrink-0 ${className}`}
+      className={`flex items-center gap-1 p-1 sm:p-1.5 px-1.5 sm:px-2 text-text-sub hover:bg-cream-dark rounded-lg transition-all group flex-shrink-0 ${className}`}
     >
       <span className="text-[14px] flex items-center">{icon}</span>
       <span className="hidden md:inline text-[12px] font-sans">{label}</span>
@@ -763,7 +763,7 @@ function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }
   const allAdegas = [{ id: 'all', name: 'Todas', emoji: '🏢' }, ...adegas];
   
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4 -mx-7 px-7 md:mx-0 md:px-0 scrollbar-hide">
+    <div className="flex flex-wrap gap-2.5 sm:gap-4 pb-4 md:mx-0 md:px-0">
       {allAdegas.map((a) => {
         const count = mode === 'wines' 
           ? (a.id === 'all' ? wines.reduce((acc: any, w: any) => acc + w.qty, 0) : wines.filter((w: any) => w.adegaId === a.id).reduce((acc: any, w: any) => acc + w.qty, 0))
@@ -773,22 +773,25 @@ function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }
           <button
             key={a.id}
             onClick={() => onChange(a.id)}
-            className={`flex items-center gap-3 py-2.5 px-4 rounded-[12px] border transition-all duration-200 whitespace-nowrap shadow-sm font-sans text-[14px] ${
+            className={`flex items-center gap-2.5 py-2 px-3 sm:px-4 rounded-[12px] border transition-all duration-200 whitespace-nowrap shadow-sm font-sans text-[13px] sm:text-[14px] ${
               activeId === a.id 
                 ? 'bg-brand-wine text-white border-brand-wine shadow-md ring-2 ring-brand-wine/10' 
                 : 'bg-white text-text-sub border-black/5 hover:border-black/10'
             }`}
           >
-            <span className="text-[16px]">{a.emoji}</span>
+            <span className="text-[14px] sm:text-[16px]">{a.emoji}</span>
             <span className="font-semibold">{a.name}</span>
-            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md transition-colors ml-1 ${activeId === a.id ? 'bg-white/20 text-white' : 'bg-cream-dark text-text-muted'}`}>
+            <span className={`text-[10px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md transition-colors ml-1 ${activeId === a.id ? 'bg-white/20 text-white' : 'bg-cream-dark text-text-muted'}`}>
               {count}
             </span>
           </button>
         );
       })}
       {isAdmin && (
-        <button className="flex items-center gap-2 py-2 px-4 rounded-[12px] border border-dashed border-parchment text-text-muted hover:border-brand-wine hover:text-brand-wine transition-all text-xs font-medium shrink-0 font-sans shadow-sm bg-white/50">
+        <button 
+          onClick={() => {}} // Placeholder or proper add adega action
+          className="flex items-center gap-2 py-2 px-3 sm:px-4 rounded-[12px] border border-dashed border-parchment text-text-muted hover:border-brand-wine hover:text-brand-wine transition-all text-xs font-medium shrink-0 font-sans shadow-sm bg-white/50"
+        >
           <Plus size={14} />
           <span>Nova</span>
         </button>
