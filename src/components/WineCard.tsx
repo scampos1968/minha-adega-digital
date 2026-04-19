@@ -119,13 +119,14 @@ export function WineCard({ wine, adega, onDrink, onEdit, onDelete, onStock, onEx
       </div>
 
       {/* Actions */}
-      <div className="grid grid-cols-4 border-t border-slate-100 bg-slate-50/30">
+      <div className="grid grid-cols-5 border-t border-slate-100 bg-slate-50/30">
         {isAdmin ? (
           <>
-            <ActionButton icon={<Edit3 size={12} />} label="Editar" onClick={() => onEdit?.(wine)} />
-            <ActionButton icon={<BookOpen size={12} />} label="Ficha" onClick={() => onExpert?.(wine)} />
-            <ActionButton icon={<GlassWater size={12} />} label="Beber" onClick={() => onDrink?.(wine)} />
-            <ActionButton icon={<Trash2 size={12} />} label="Del" onClick={() => onDelete?.(wine)} />
+            <ActionButton icon={<Edit3 size={11} />} label="Editar" onClick={() => onEdit?.(wine)} />
+            <ActionButton icon={<BookOpen size={11} />} label="Análise" onClick={() => onExpert?.(wine)} />
+            <ActionButton icon={<Package size={11} />} label="Estoque" onClick={() => onStock?.(wine)} />
+            <ActionButton icon={<GlassWater size={11} />} label="Consumo" onClick={() => onDrink?.(wine)} />
+            <ActionButton icon={<Trash2 size={11} />} label="Apagar" onClick={() => onDelete?.(wine)} className="text-red-400 hover:text-red-600" />
           </>
         ) : (
           <>
