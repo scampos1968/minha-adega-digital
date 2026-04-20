@@ -793,12 +793,6 @@ function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, 
             </button>
           )}
 
-          {isAdmin && (
-            <button onClick={onInout} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Banco de Dados">
-              <Database size={16} />
-            </button>
-          )}
-
           <button onClick={onVoice} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Voz">
             <Mic size={16} />
           </button>

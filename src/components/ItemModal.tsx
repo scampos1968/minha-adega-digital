@@ -128,19 +128,19 @@ export function ItemModal({ item, mode, adegas, activeAdegaId, onClose, onSave, 
     <ModalShell 
       title={isEdit ? `Editar ${item.name}` : `Novo ${isWine ? 'Vinho' : 'Spirit'}`} 
       onClose={onClose}
-      icon={isWine ? <WineIcon size={20} className="text-indigo-600" /> : <GlassWater size={20} className="text-slate-800" />}
+      icon={isWine ? <WineIcon size={20} className="text-brand-wine" /> : <GlassWater size={20} className="text-[#8B4513]" />}
       footer={
         <>
           <button 
             onClick={onClose}
-            className="flex-1 py-3 px-6 bg-white border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-all font-sans"
+            className="flex-1 py-4 px-6 bg-white border border-parchment rounded-xl text-[11px] font-bold uppercase tracking-widest text-text-muted hover:bg-cream-dark transition-all font-sans"
           >
             Cancelar
           </button>
           <button 
             onClick={handleSubmit}
             disabled={loadingSave || !formData.name}
-            className="flex-1 py-3 px-6 bg-indigo-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-md active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 font-sans"
+            className="flex-1 py-4 px-6 bg-brand-wine text-white rounded-xl text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-md active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 font-sans"
           >
             {loadingSave ? <RefreshCw className="animate-spin" size={14} /> : <Save size={14} />}
             {isEdit ? 'Salvar Alterações' : 'Adicionar à Adega'}
@@ -258,69 +258,69 @@ export function ItemModal({ item, mode, adegas, activeAdegaId, onClose, onSave, 
 
           {isWine ? (
             <>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Safra (Vintage)</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted pl-1">Safra (Vintage)</label>
                 <input 
                   type="text" 
                   value={formData.vintage}
                   onChange={(e) => setFormData(prev => ({ ...prev, vintage: e.target.value }))}
                   placeholder="Ex: 2018"
-                  className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-sm focus:border-brand-gold/40 outline-none transition-all font-medium text-text-main"
                 />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Uva</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted pl-1">Uva</label>
                 <input 
                   type="text" 
                   value={formData.grape}
                   onChange={(e) => setFormData(prev => ({ ...prev, grape: e.target.value }))}
                   placeholder="Ex: Cabernet"
-                  className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-sm focus:border-brand-gold/40 outline-none transition-all font-medium text-text-main"
                 />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Janela de Consumo</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted pl-1">Janela de Consumo</label>
                 <div className="flex items-center gap-1">
                    <input 
                       type="text" 
                       placeholder="De" 
                       value={formData.drinkFrom || ''} 
                       onChange={(e) => setFormData(prev => ({ ...prev, drinkFrom: e.target.value }))}
-                      className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-2 text-center text-[10px] outline-none" 
+                      className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-2 text-center text-xs font-bold text-text-main outline-none focus:border-brand-gold/40" 
                    />
-                   <span className="opacity-40">-</span>
+                   <span className="opacity-20">/</span>
                    <input 
                       type="text" 
-                      placeholder="Ate" 
+                      placeholder="Até" 
                       value={formData.drinkUntil || ''} 
                       onChange={(e) => setFormData(prev => ({ ...prev, drinkUntil: e.target.value }))}
-                      className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-2 text-center text-[10px] outline-none" 
+                      className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-2 text-center text-xs font-bold text-text-main outline-none focus:border-brand-gold/40" 
                    />
-                   <button onClick={handleEnhanceWindow} className="p-2 text-amber-500 hover:bg-amber-50 rounded-lg transition-all" title="IA Suggestion">
-                     <Sparkles size={14} />
+                   <button onClick={handleEnhanceWindow} className="p-2 text-brand-gold hover:bg-brand-gold/5 rounded-lg transition-all" title="IA Suggestion">
+                     <Sparkles size={16} />
                    </button>
                 </div>
               </div>
             </>
           ) : (
             <>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Região / Sub-tipo</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted pl-1">Região / Sub-tipo</label>
                 <input 
                   type="text" 
                   value={formData.region}
                   onChange={(e) => setFormData(prev => ({ ...prev, region: e.target.value }))}
-                  className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-sm focus:border-brand-gold/40 outline-none transition-all font-medium text-text-main"
                 />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Graduação (ABV %)</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted pl-1">Graduação (ABV %)</label>
                 <input 
                   type="number" 
                   step="0.1"
                   value={formData.abv}
                   onChange={(e) => setFormData(prev => ({ ...prev, abv: e.target.value }))}
-                  className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-sm focus:border-brand-gold/40 outline-none transition-all font-bold text-text-main"
                 />
               </div>
             </>
@@ -328,13 +328,13 @@ export function ItemModal({ item, mode, adegas, activeAdegaId, onClose, onSave, 
         </div>
 
         <div className="space-y-2">
-           <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Notas Pessoais</label>
+           <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted pl-1">Notas Pessoais</label>
            <textarea 
               rows={3} 
               value={formData.notes}
               onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
               placeholder="Fatos históricos, valor de compra, presente de quem..."
-              className="w-full bg-white border border-slate-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all resize-none"
+              className="w-full bg-white border border-black/5 rounded-[22px] py-4 px-5 text-sm focus:border-brand-gold/40 outline-none transition-all resize-none font-medium text-text-main shadow-sm"
            />
         </div>
       </div>
