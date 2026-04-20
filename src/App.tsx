@@ -35,7 +35,6 @@ export default function App() {
   // Modal state
   const [activeModal, setActiveModal] = useState<'expert' | 'drink' | 'edit' | 'stock' | 'voice' | 'inout' | 'scan' | null>(null);
   const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [scanToken, setScanToken] = useState(0);
   const [scannedData, setScannedData] = useState<{ data: any, imageUrl: string } | null>(null);
   const [scanQueue, setScanQueue] = useState<{ data: any, imageUrl: string }[]>([]);
 
@@ -464,17 +463,10 @@ export default function App() {
         isAdmin={isAdmin}
         onRefresh={boot}
         onLogout={handleLogout}
-        onVoice={() => setActiveModal('voice')}
-        onScan={() => {
-          setSelectedItem(null);
-          setScannedData(null);
-          setActiveModal('scan');
-        }}
-        onAdd={() => { setSelectedItem(null); setScannedData(null); setActiveModal('edit'); }}
         onInout={() => setActiveModal('inout')}
       />
       
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 pt-1 pb-8 md:px-8">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 pt-1 pb-24 md:px-8">
         <AnimatePresence mode="wait">
           {view === 'cellar' ? (
             <motion.div 
@@ -484,15 +476,17 @@ export default function App() {
               exit={{ opacity: 0, y: -15 }}
               className="space-y-1"
             >
-              <AdegaTabs 
-                adegas={adegas} 
-                activeId={activeAdega} 
-                onChange={setActiveAdega} 
-                mode={mode}
-                wines={wines}
-                spirits={spirits}
-                isAdmin={isAdmin}
-              />
+              <div className="overflow-x-auto -mx-4 px-4 no-scrollbar pb-2">
+                <AdegaTabs 
+                  adegas={adegas} 
+                  activeId={activeAdega} 
+                  onChange={setActiveAdega} 
+                  mode={mode}
+                  wines={wines}
+                  spirits={spirits}
+                  isAdmin={isAdmin}
+                />
+              </div>
 
               {adegas.length === 0 && syncStatus === 'ok' && (
                 <div className="p-4 bg-cream-dark border border-parchment rounded-xl text-text-sub text-xs font-medium flex items-center gap-2">
@@ -542,6 +536,50 @@ export default function App() {
           )}
         </AnimatePresence>
       </main>
+
+      {/* Bottom Bar for iPhone Optimization */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-black/5 px-6 pb-safe pt-3 flex items-center justify-between z-40 md:hidden shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
+        <button 
+          onClick={() => setView('cellar')} 
+          className={`flex flex-col items-center gap-1 transition-all ${view === 'cellar' ? 'text-brand-wine' : 'text-text-muted'}`}
+        >
+          <LayoutGrid size={22} strokeWidth={view === 'cellar' ? 2.5 : 2} />
+          <span className="text-[10px] font-bold uppercase tracking-tighter">Adega</span>
+        </button>
+        
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setActiveModal('voice')} 
+            className="w-11 h-11 flex items-center justify-center bg-cream-dark text-text-main rounded-2xl active:scale-90 transition-all border border-black/5"
+          >
+            <Mic size={20} />
+          </button>
+          
+          {isAdmin && (
+            <button 
+              onClick={() => { setSelectedItem(null); setScannedData(null); setActiveModal('edit'); }}
+              className="w-14 h-14 flex items-center justify-center bg-brand-wine text-white rounded-[20px] shadow-lg shadow-brand-wine/25 active:scale-90 transition-all -mt-8 border-4 border-white"
+            >
+              <Plus size={28} strokeWidth={3} />
+            </button>
+          )}
+
+          <button 
+            onClick={() => { setSelectedItem(null); setScannedData(null); setActiveModal('scan'); }}
+            className="w-11 h-11 flex items-center justify-center bg-cream-dark text-text-main rounded-2xl active:scale-90 transition-all border border-black/5"
+          >
+            <Camera size={20} />
+          </button>
+        </div>
+
+        <button 
+          onClick={() => setView('history')} 
+          className={`flex flex-col items-center gap-1 transition-all ${view === 'history' ? 'text-brand-wine' : 'text-text-muted'}`}
+        >
+          <History size={22} strokeWidth={view === 'history' ? 2.5 : 2} />
+          <span className="text-[10px] font-bold uppercase tracking-tighter">Histórico</span>
+        </button>
+      </nav>
 
       {/* Modals */}
       <AnimatePresence>
@@ -598,7 +636,6 @@ export default function App() {
                 setScannedData(null); 
                 setScanQueue([]);
             }} 
-            autoScan={!selectedItem && scanToken > 0}
             preScannedData={scannedData}
           />
         )}
@@ -816,7 +853,7 @@ function LoginScreen({ onAdminLogin, onGuestLogin }: { onAdminLogin: (token: str
   );
 }
 
-function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, onLogout, onVoice, onAdd, onInout, onScan }: any) {
+function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, onLogout, onInout }: any) {
   return (
     <header className="sticky top-0 z-50 bg-cream/96 backdrop-blur-md border-b border-black/5 h-auto py-2 flex items-center">
       <div className="max-w-[1300px] mx-auto w-full px-4 flex flex-wrap items-center justify-between gap-y-2">
@@ -860,40 +897,12 @@ function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, 
         </div>
 
         <nav className="flex items-center gap-0.5 sm:gap-1">
-          <button 
-            onClick={() => setView(view === 'cellar' ? 'history' : 'cellar')} 
-            className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors"
-            title={view === 'cellar' ? 'Histórico' : 'Voltar para Adega'}
-          >
-            {view === 'cellar' ? <History size={16} /> : <LayoutGrid size={16} />}
-          </button>
-          
           {isAdmin && (
             <button onClick={onInout} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Gestão da Base de Dados">
               <Database size={16} />
             </button>
           )}
 
-          <button onClick={onVoice} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Voz">
-            <Mic size={16} />
-          </button>
-
-          <button onClick={onScan} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Scan">
-            <Camera size={16} />
-          </button>
-
-          <div className="w-[1px] h-4 bg-black/5 mx-0.5 sm:mx-1" />
-
-          {isAdmin && (
-            <button 
-              onClick={onAdd}
-              className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-brand-wine text-white rounded-full hover:opacity-90 active:scale-95 transition-all shadow-sm"
-              title="Adicionar item"
-            >
-              <Plus size={18} />
-            </button>
-          )}
-          
           <button onClick={onLogout} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Sair">
              <LogOut size={16} />
           </button>

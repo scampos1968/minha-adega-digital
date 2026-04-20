@@ -134,7 +134,7 @@ export function InventoryGrid({ groupedItems, mode, adegas, isAdmin, groupBy, on
   return (
     <div className="space-y-4">
       {/* Search & Filter Bar - Forced Single Line */}
-      <div className="flex flex-row items-center gap-1.5 sm:gap-3 bg-white border border-black/10 rounded-[20px] p-1.5 sm:p-2.5 mb-8 shadow-old overflow-x-auto no-scrollbar">
+      <div className="flex flex-row items-center gap-1.5 sm:gap-3 bg-white border border-black/10 rounded-[20px] p-1.5 sm:p-2.5 mb-3 shadow-old overflow-x-auto no-scrollbar">
         {/* Compact Search Input (Much smaller) */}
         <div className="relative w-[38%] min-w-[110px] shrink-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted opacity-40" size={13} />
@@ -269,7 +269,7 @@ export function InventoryGrid({ groupedItems, mode, adegas, isAdmin, groupBy, on
         )}
       </AnimatePresence>
 
-      <div className="space-y-12">
+      <div className="space-y-6">
         {Object.entries(filteredGroupedItems).map(([group, sectionItems]: [string, any[]]) => {
           const totalQty = sectionItems.reduce((acc, item) => acc + (item.qty || 0), 0);
           const scoredItems = sectionItems.filter(i => i.score);
