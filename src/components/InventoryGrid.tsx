@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react';
-import { Wine, Spirit, Adega, Consumption, SpiritConsumption } from '../types';
+import { useState, useMemo, ReactNode } from 'react';
+import { Wine, Spirit, Adega } from '../types';
 import { WineCard } from './WineCard';
 import { SpiritCard } from './SpiritCard';
-import { Search, Filter, X, LayoutGrid, List, Star } from 'lucide-react';
+import { Search, Filter, X, Star, Droplet, ALargeSmall, Hourglass } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface GridProps {
@@ -18,7 +18,21 @@ interface GridProps {
   onStock: (item: any) => void;
   onExpert: (item: any) => void;
 }
-
+function SortButton({ active, onClick, icon, title }: { active: boolean; onClick: () => void; icon: ReactNode; title: string }) {
+  return (
+    <button 
+      onClick={onClick}
+      title={title}
+      className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all ${
+        active 
+          ? 'bg-brand-wine text-white border-brand-wine shadow-md scale-105' 
+          : 'bg-white border-black/10 text-text-sub hover:bg-cream-dark shadow-sm'
+      }`}
+    >
+      {icon}
+    </button>
+  );
+}
 export function InventoryGrid({ groupedItems, mode, adegas, isAdmin, groupBy, onGroupByChange, ...handlers }: GridProps) {
   const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -61,87 +75,126 @@ export function InventoryGrid({ groupedItems, mode, adegas, isAdmin, groupBy, on
 
         return matchSearch && matchType && matchCountry && matchVintage && matchReady;
       }).sort((a, b) => {
-        const isEmptyA = (a as Wine).qty === 0 || (a as Spirit).level === 0;
-        const isEmptyB = (b as Wine).qty === 0 || (b as Spirit).level === 0;
-        if (isEmptyA && !isEmptyB) return 1;
-        if (!isEmptyA && isEmptyB) return -1;
+        // 1. Identify "Consumed" (Empty) state
+        // A Wine is consumed if qty <= 0.
+        // A Spirit is consumed if:
+        // - qty <= 0 (Total stock is zero)
+        // - OR qty is 1, and that single bottle is already open and empty.
+        const spiritA = a as Spirit;
+        const spiritB = b as Spirit;
         
-        if (sortBy === 'vintage') {
-          return (Number((b as Wine).vintage) || 0) - (Number((a as Wine).vintage) || 0);
+        const isConsumedA = mode === 'wines' 
+          ? (a as Wine).qty <= 0 
+          : spiritA.qty <= 0 || (spiritA.qty <= 1 && spiritA.isOpen && spiritA.level <= 0);
+        const isConsumedB = mode === 'wines' 
+          ? (b as Wine).qty <= 0 
+          : spiritB.qty <= 0 || (spiritB.qty <= 1 && spiritB.isOpen && spiritB.level <= 0);
+        
+        // Rule: Consumed items ALWAYS go to bottom, regardless of sort criteria
+        if (isConsumedA && !isConsumedB) return 1;
+        if (!isConsumedA && isConsumedB) return -1;
+        
+        // 2. Apply Primary Sort Criteria
+        let comparison = 0;
+        
+        if (sortBy === 'level') {
+          // "Vazio para cheio" (Ascending: 0 -> 100)
+          const valA = mode === 'wines' ? (a as Wine).qty : (a as Spirit).level;
+          const valB = mode === 'wines' ? (b as Wine).qty : (b as Spirit).level;
+          comparison = Number(valA || 0) - Number(valB || 0);
+        } else if (sortBy === 'score') {
+          // "Mais pontuado para menos" (Descending)
+          comparison = (Number(b.score || 0)) - (Number(a.score || 0));
+        } else if (sortBy === 'readiness' && mode === 'wines') {
+          // "Mais pronto para beber" (Ascending - lower drinkUntil means needs to be drunk sooner)
+          const wineA = a as Wine;
+          const wineB = b as Wine;
+          const endA = wineA.drinkUntil || 9999;
+          const endB = wineB.drinkUntil || 9999;
+          comparison = endA - endB;
+        } else {
+          // Default: Name (A-Z)
+          comparison = a.name.localeCompare(b.name);
         }
-        if (sortBy === 'score') {
-          return (b.score || 0) - (a.score || 0);
+
+        // 3. Secondary Sort: Name (Consistency)
+        if (comparison === 0) {
+          return a.name.localeCompare(b.name);
         }
-        return a.name.localeCompare(b.name);
+        return comparison;
       });
       if (filtered.length > 0) next[group] = filtered;
     });
     return next;
-  }, [groupedItems, search, filters, sortBy]);
+  }, [groupedItems, search, filters, sortBy, mode]);
 
   const uniqueCountries = useMemo(() => [...new Set(allItems.map(i => i.country).filter(Boolean))].sort(), [allItems]);
   const uniqueTypes = useMemo(() => [...new Set(allItems.map(i => i.type))].sort(), [allItems]);
 
   return (
     <div className="space-y-4">
-      {/* Search & Filter Bar */}
-      <div className="flex flex-col md:flex-row gap-2.5 items-center bg-white border border-black/10 rounded-[14px] p-4 mb-6 shadow-old">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={15} />
+      {/* Search & Filter Bar - Forced Single Line */}
+      <div className="flex flex-row items-center gap-1.5 sm:gap-3 bg-white border border-black/10 rounded-[20px] p-1.5 sm:p-2.5 mb-8 shadow-old overflow-x-auto no-scrollbar">
+        {/* Compact Search Input (Much smaller) */}
+        <div className="relative w-[38%] min-w-[110px] shrink-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted opacity-40" size={13} />
           <input 
             type="text"
-            placeholder={`Buscar na adega...`}
+            placeholder={`Buscar...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-cream-dark border border-black/5 rounded-lg py-2 pl-9 pr-9 text-[13px] outline-none focus:border-brand-wine/30 transition-all font-light"
+            className="w-full bg-cream-dark/50 border border-black/5 rounded-xl py-2 pl-8 pr-8 text-[12px] font-medium outline-none focus:border-brand-wine/20 transition-all text-text-main"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-brand-wine p-1">
-              <X size={13} />
+            <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-brand-wine p-0.5">
+              <X size={11} />
             </button>
           )}
         </div>
         
-        <div className="flex gap-2 w-full md:w-auto">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-cream-dark border border-black/5 rounded-lg flex-1 md:flex-none">
-             <span className="text-[9px] uppercase font-bold text-text-muted tracking-wider">Agrupar</span>
-             <select 
-              value={groupBy}
-              onChange={e => onGroupByChange(e.target.value)}
-              className="text-[12px] font-normal outline-none bg-transparent text-text-main cursor-pointer"
-             >
-                <option value="none">—</option>
-                <option value="country">País</option>
-                <option value="type">Tipo</option>
-                <option value="grape">Uva</option>
-                <option value="vintage">Safra</option>
-                <option value="adegaId">Adega</option>
-             </select>
-          </div>
-
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-cream-dark border border-black/5 rounded-lg flex-1 md:flex-none">
-             <span className="text-[9px] uppercase font-bold text-text-muted tracking-wider">Ordem</span>
-             <select 
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value)}
-              className="text-[12px] font-normal outline-none bg-transparent text-text-main cursor-pointer"
-             >
-                <option value="name">Nome (A-Z)</option>
-                <option value="vintage">Safra (Mais novo)</option>
-                <option value="score">Pontuação</option>
-             </select>
-          </div>
+        {/* The 5 Predefined Action Buttons - Same Line */}
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto">
+          {mode === 'spirits' && (
+            <SortButton 
+              active={sortBy === 'level'} 
+              onClick={() => setSortBy(sortBy === 'level' ? 'name' : 'level')}
+              icon={<Droplet size={16} />}
+              title="Ordenar por nível (Vazio para Cheio)"
+            />
+          )}
+          <SortButton 
+            active={sortBy === 'name'} 
+            onClick={() => setSortBy('name')}
+            icon={<ALargeSmall size={16} />}
+            title="Ordenar por nome (A-Z)"
+          />
+          {mode === 'wines' && (
+            <SortButton 
+              active={sortBy === 'readiness'} 
+              onClick={() => setSortBy(sortBy === 'readiness' ? 'name' : 'readiness')}
+              icon={<Hourglass size={16} />}
+              title="Mais prontos para beber"
+            />
+          )}
+          <SortButton 
+            active={sortBy === 'score'} 
+            onClick={() => setSortBy(sortBy === 'score' ? 'name' : 'score')}
+            icon={<Star size={16} />}
+            title="Mais pontuados"
+          />
+          
+          <div className="w-[1px] h-5 bg-black/5 mx-0.5" />
 
           <button 
             onClick={() => setShowFilters(!showFilters)}
-            className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-all ${
+            className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl border transition-all shrink-0 ${
               showFilters 
-                ? 'bg-brand-wine text-white border-brand-wine shadow-sm' 
+                ? 'bg-brand-wine text-white border-brand-wine shadow-md scale-105' 
                 : 'bg-white border-black/10 text-text-sub hover:bg-cream-dark shadow-sm'
             }`}
-            title="Filtrar adega"
+            title="Filtros adicionais"
           >
-            <Filter size={18} />
+            <Filter size={16} />
           </button>
         </div>
       </div>

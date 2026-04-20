@@ -152,34 +152,6 @@ export default function App() {
     onInout: () => setActiveModal('inout'),
   };
 
-  const handleExportCSV = () => {
-    const rows = [["Nome", "Produtor", "País", "Tipo", "Uva", "Safra", "Qtd", "Adega", "Nota", "Notas"]];
-    wines.forEach(w => {
-      const a = adegas.find(x => x.id === w.adegaId)?.name || "";
-      rows.push([
-        w.name,
-        w.producer || "",
-        w.country || "",
-        w.type || "",
-        w.grape || "",
-        w.vintage || "",
-        w.qty.toString(),
-        a,
-        w.score?.toString() || "",
-        (w.notes || "").replace(/\n/g, " ")
-      ]);
-    });
-    const csvContent = rows.map(r => r.map(c => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `adega_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   async function handleDeleteConsumption(id: string, isSpirit: boolean) {
     if (!isAdmin) return;
     if (!confirm('Excluir este registro do histórico permanentemente?')) return;
@@ -239,8 +211,12 @@ export default function App() {
         const spirit = selectedItem as Spirit;
         const newLevel = data.levelAfter;
         
-        // Update spirit level
-        await sbPatch('spirits', spirit.id, { level: newLevel, score: data.score });
+        // Update spirit level and mark as open
+        await sbPatch('spirits', spirit.id, { 
+          level: newLevel, 
+          is_open: true,
+          score: data.score 
+        });
         
         // Save consumption
         const cons: SpiritConsumption = {
@@ -257,7 +233,7 @@ export default function App() {
         await sbUpsert('spirit_consumptions', spiritConsumptionToDB(cons));
         
         // Update local state
-        setSpirits(prev => prev.map(s => s.id === spirit.id ? { ...s, level: newLevel, score: data.score } : s));
+        setSpirits(prev => prev.map(s => s.id === spirit.id ? { ...s, level: newLevel, score: data.score, isOpen: true } : s));
         setSpiritCons(prev => [cons, ...prev]);
         
       } else {
@@ -378,6 +354,103 @@ export default function App() {
 
   if (!isAuthenticated) {
     return <LoginScreen onAdminLogin={handleAdminLogin} onGuestLogin={handleGuestLogin} />;
+  }
+
+  async function handleExportCSV() {
+    try {
+      const items = mode === 'wines' ? wines : spirits;
+      if (items.length === 0) return alert('Nenhum item para exportar');
+
+      const headers = mode === 'wines' 
+        ? ['ID', 'Nome', 'Produtor', 'País', 'Tipo', 'Uva', 'Safra', 'Qtd', 'Nota', 'DrinkFrom', 'DrinkUntil']
+        : ['ID', 'Nome', 'Produtor', 'País', 'Tipo', 'Subtipo', 'Volume', 'ABV', 'Nível', 'Qtd', 'Aberta', 'Nota'];
+
+      const rows = items.map(item => {
+        if (mode === 'wines') {
+          const w = item as Wine;
+          return [w.id, w.name, w.producer || '', w.country || '', w.type, w.grape || '', w.vintage || '', w.qty, w.score || '', w.drinkFrom || '', w.drinkUntil || ''];
+        } else {
+          const s = item as Spirit;
+          return [s.id, s.name, s.producer || '', s.country || '', s.type, s.subtype || '', s.volume || '', s.abv || '', s.level, s.qty, s.isOpen ? 'Sim' : 'Não', s.score || ''];
+        }
+      });
+
+      const csvContent = [headers, ...rows].map(e => e.join(';')).join('\n');
+      const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `adega98_${mode}_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao exportar CSV');
+    }
+  }
+
+  async function handleBackup() {
+    if (!isAdmin) return;
+    setSyncStatus('saving');
+    try {
+      const [adegasRaw, winesRaw, consRaw, spiritsRaw, sConsRaw] = await Promise.all([
+        sbGet('adegas'),
+        sbGet('wines'),
+        sbGet('consumptions'),
+        sbGet('spirits'),
+        sbGet('spirit_consumptions')
+      ]);
+
+      const data = {
+        adegas: adegasRaw,
+        wines: winesRaw,
+        spirits: spiritsRaw,
+        consumptions: consRaw,
+        spirit_consumptions: sConsRaw,
+        version: '2.0',
+        timestamp: new Date().toISOString()
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `adega98_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setSyncStatus('ok');
+    } catch (e) {
+      console.error(e);
+      setSyncStatus('error');
+      alert('Erro ao gerar backup total');
+    }
+  }
+
+  async function handleRestore(file: File) {
+    if (!isAdmin) return;
+    if (!confirm('ATENÇÃO: A restauração pode duplicar registros se não for cuidadosa. Os registros existentes com o mesmo ID serão atualizados. Deseja continuar?')) return;
+    
+    setSyncStatus('saving');
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      
+      if (data.adegas?.length > 0) await sbUpsert('adegas', data.adegas);
+      if (data.wines?.length > 0) await sbUpsert('wines', data.wines);
+      if (data.spirits?.length > 0) await sbUpsert('spirits', data.spirits);
+      if (data.consumptions?.length > 0) await sbUpsert('consumptions', data.consumptions);
+      if (data.spirit_consumptions?.length > 0) await sbUpsert('spirit_consumptions', data.spirit_consumptions);
+      if (data.spiritCons?.length > 0) await sbUpsert('spirit_consumptions', data.spiritCons);
+      
+      await boot();
+      setSyncStatus('ok');
+      alert('Base de dados restaurada com sucesso!');
+    } catch (e) {
+      console.error(e);
+      setSyncStatus('error');
+      alert('Erro na restauração: ' + (e as Error).message);
+    }
   }
 
   return (
@@ -560,18 +633,9 @@ export default function App() {
         )}
         {activeModal === 'inout' && (
           <ReportsModal 
-            wines={wines}
-            spirits={spirits}
-            adegas={adegas}
-            consumptions={consumptions}
-            spiritCons={spiritCons}
-            view={view}
-            mode={mode}
-            activeAdegaId={activeAdega}
             onClose={() => setActiveModal(null)}
-            onExport={handleExportCSV}
-            onImport={() => alert('Importação automática via planilha está sendo aprimorada. Use o modo Adicionar por enquanto.')}
-            onBackup={() => alert('Backup: Use o Exportar CSV para baixar seus dados em uma planilha.')}
+            onBackup={handleBackup}
+            onRestore={handleRestore}
           />
         )}
       </AnimatePresence>
@@ -587,32 +651,49 @@ export default function App() {
 
 function LoadingIndicator() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-slate-50">
-      <motion.div 
-        animate={{ rotate: 360 }}
-        transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
-        className="w-20 h-20 border-t-2 border-r-2 border-indigo-200 rounded-full flex items-center justify-center"
-      >
+    <div className="min-h-screen flex flex-col items-center justify-center gap-8 bg-cream-dark">
+      <div className="relative">
         <motion.div 
-          animate={{ scale: [1, 1.15, 1] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-          className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg"
-        >
-          🍷
-        </motion.div>
-      </motion.div>
-      <div className="flex flex-col items-center gap-2">
-        <h2 className="text-slate-400 text-xl font-bold uppercase tracking-widest text-xs">Carregando sua adega...</h2>
-        <div className="flex gap-2">
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 5, ease: "linear" }}
+          className="w-24 h-24 border-t-[0.5px] border-l-[0.5px] border-brand-wine/20 rounded-full flex items-center justify-center"
+        />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <motion.div 
+            animate={{ scale: [1, 1.08, 1], opacity: [0.8, 1, 0.8] }}
+            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+            className="w-16 h-16 bg-brand-wine rounded-[24px] flex items-center justify-center text-3xl shadow-old-lg"
+          >
+            🍷
+          </motion.div>
+        </div>
+      </div>
+
+      <div className="flex flex-col items-center gap-3">
+        <h2 className="text-text-sub text-[10px] font-bold uppercase tracking-[0.25em] pl-1">Carregando sua adega</h2>
+        <div className="flex gap-2.5">
           {[0, 1, 2].map((i) => (
-            <motion.span 
+            <motion.div 
               key={i}
-              animate={{ opacity: [0.2, 1, 0.2] }}
-              transition={{ repeat: Infinity, duration: 1, delay: i * 0.2 }}
-              className="w-1.5 h-1.5 rounded-full bg-indigo-600"
+              animate={{ 
+                scale: [1, 1.5, 1],
+                opacity: [0.3, 1, 0.3]
+              }}
+              transition={{ 
+                repeat: Infinity, 
+                duration: 1.5, 
+                delay: i * 0.2,
+                ease: "easeInOut"
+              }}
+              className="w-1 h-1 rounded-full bg-brand-wine"
             />
           ))}
         </div>
+      </div>
+
+      {/* Decorative background for loader */}
+      <div className="fixed inset-0 pointer-events-none -z-10 opacity-[0.02] overflow-hidden">
+         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-brand-gold rounded-full blur-[150px]" />
       </div>
     </div>
   );
@@ -788,8 +869,8 @@ function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, 
           </button>
           
           {isAdmin && (
-            <button onClick={onInout} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Relatórios e Dashboard">
-              <BarChart3 size={16} />
+            <button onClick={onInout} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Gestão da Base de Dados">
+              <Database size={16} />
             </button>
           )}
 
