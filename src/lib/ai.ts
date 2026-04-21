@@ -14,7 +14,7 @@ Considere recomendações de críticos e notas de produtores. Com base nisso, re
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json"
@@ -58,7 +58,7 @@ ${details}`;
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: prompt
     });
     return response.text || "Análise não disponível.";
@@ -108,7 +108,7 @@ INVENTÁRIO (${inventory.length} disponíveis): ${JSON.stringify(inventory)}
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json"
@@ -138,7 +138,7 @@ Se não tiver certeza, deixe o campo como "".`;
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: [
         { text: prompt },
         { inlineData: { data: imageBase64.split(',')[1], mimeType: "image/jpeg" } }
