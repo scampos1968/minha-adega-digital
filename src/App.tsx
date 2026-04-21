@@ -78,9 +78,19 @@ export default function App() {
     try {
       const sessionString = localStorage.getItem('adega_session');
       if (sessionString) {
-        const session = JSON.parse(sessionString);
+        let session;
+        try {
+          session = JSON.parse(sessionString);
+        } catch (e) {
+          console.error("Session parse error", e);
+          handleLogout();
+          setLoading(false);
+          return;
+        }
+
         if (!session || !session.expiry || Date.now() > session.expiry) {
           handleLogout();
+          setLoading(false);
           return;
         }
         setIsAuthenticated(true);
@@ -396,16 +406,20 @@ export default function App() {
         <h2 className="text-xl font-medium text-[#2c1810] mb-2 font-serif italic">Adega Pessoal</h2>
         <p className="text-[#5a2e14]/60 text-sm max-w-xs">Carregando sua coleção...</p>
         
-        <button 
-          onClick={() => {
-            localStorage.removeItem('adega_session');
-            window.location.reload();
-          }}
-          className="mt-12 text-xs text-[#5a2e14]/40 hover:text-[#5a2e14] underline flex items-center gap-1.5"
-        >
-          <RefreshCw size={12} />
-          Se travar por muito tempo, clique aqui para resetar
-        </button>
+        <div className="mt-12 flex flex-col gap-4">
+          <button 
+            onClick={() => {
+              localStorage.clear();
+              window.location.href = window.location.pathname; 
+            }}
+            className="text-xs text-[#5a2e14]/40 hover:text-[#5a2e14] underline flex items-center justify-center gap-1.5"
+          >
+            <RefreshCw size={12} />
+            Forçar Limpeza de Cache & Reset
+          </button>
+          
+          <p className="text-[10px] text-[#5a2e14]/20 italic">v1.2.1 - Aguardando conexão...</p>
+        </div>
       </div>
     );
   }
@@ -964,7 +978,7 @@ function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, 
             className="group flex flex-col"
           >
             <div className="flex items-center gap-2">
-              <h1 className="italic text-xl sm:text-2xl text-text-main font-serif tracking-tight">Adega <span className="text-[10px] opacity-20 not-italic">v1.2</span></h1>
+              <h1 className="italic text-xl sm:text-2xl text-text-main font-serif tracking-tight">Adega <span className="text-[10px] opacity-20 not-italic">v1.2.1</span></h1>
               {isAdmin && (
                 <span className="text-[7px] bg-brand-wine text-cream px-1.5 py-0.5 rounded-full font-bold uppercase tracking-widest leading-none">Admin</span>
               )}
