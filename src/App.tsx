@@ -921,7 +921,7 @@ function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, 
             className="group flex flex-col"
           >
             <div className="flex items-center gap-2">
-              <h1 className="italic text-xl sm:text-2xl text-text-main font-serif tracking-tight">Adega <span className="text-[10px] opacity-20 not-italic">v1.1</span></h1>
+              <h1 className="italic text-xl sm:text-2xl text-text-main font-serif tracking-tight">Adega <span className="text-[10px] opacity-20 not-italic">v1.2</span></h1>
               {isAdmin && (
                 <span className="text-[7px] bg-brand-wine text-cream px-1.5 py-0.5 rounded-full font-bold uppercase tracking-widest leading-none">Admin</span>
               )}
