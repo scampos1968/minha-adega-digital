@@ -2,28 +2,13 @@ import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
-import { registerSW } from 'virtual:pwa-register';
 
-// On every load, unregister stale service workers that don't have skipWaiting.
-// This ensures old cached versions never block a fresh deploy from loading.
+// Unregister all service workers — SW caching was causing stale deploys to freeze the app.
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(registrations => {
-    for (const reg of registrations) {
-      if (reg.waiting) {
-        // Old SW is waiting — force it to activate immediately.
-        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-      }
-    }
+    for (const reg of registrations) reg.unregister();
   });
 }
-
-registerSW({
-  immediate: true,
-  onNeedRefresh() {
-    // New version available — reload to activate immediately.
-    window.location.reload();
-  },
-});
 
 // Emergency Clear via URL: adding ?clear=true to the URL will reset the app
 if (window.location.search.includes('clear=true')) {
@@ -32,7 +17,7 @@ if (window.location.search.includes('clear=true')) {
     sessionStorage.clear();
     if (window.caches) {
       caches.keys().then(names => {
-        for (let name of names) caches.delete(name);
+        for (const name of names) caches.delete(name);
       });
     }
     console.log('App reset requested via URL');
@@ -44,20 +29,10 @@ if (window.location.search.includes('clear=true')) {
 }
 
 // Global error logger for diagnostics
-window.onerror = (msg, url, lineNo, columnNo, error) => {
+window.onerror = (msg, url, lineNo, columnNo) => {
   const div = document.createElement('div');
-  div.style.position = 'fixed';
-  div.style.bottom = '10px';
-  div.style.left = '10px';
-  div.style.right = '10px';
-  div.style.padding = '10px';
-  div.style.backgroundColor = 'rgba(255, 0, 0, 0.9)';
-  div.style.color = 'white';
-  div.style.zIndex = '99999';
-  div.style.fontSize = '10px';
-  div.style.borderRadius = '8px';
-  div.style.fontFamily = 'monospace';
-  div.innerText = `ERROR: ${msg}\nLine: ${lineNo}\nCol: ${columnNo}\nURL: ${url}`;
+  div.style.cssText = 'position:fixed;bottom:10px;left:10px;right:10px;padding:10px;background:rgba(255,0,0,0.9);color:white;z-index:99999;font-size:10px;border-radius:8px;font-family:monospace';
+  div.innerText = `ERROR: ${msg}\nLine: ${lineNo} Col: ${columnNo}\nURL: ${url}`;
   document.body.appendChild(div);
   return false;
 };
