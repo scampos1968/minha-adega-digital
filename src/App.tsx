@@ -42,6 +42,13 @@ export default function App() {
   useEffect(() => {
     checkSession();
     
+    // Hide initial HTML loader if it exists
+    const loader = document.getElementById('initial-loader');
+    if (loader) {
+      loader.style.opacity = '0';
+      setTimeout(() => loader.remove(), 500);
+    }
+    
     // Auth error handling (JWT expired)
     const handleAuthError = () => {
       handleLogout();

@@ -19,6 +19,8 @@ export default defineConfig(({mode}) => {
           description: 'Gerenciador de vinhos e spirits',
           theme_color: '#2c1810',
           background_color: '#faf7f2',
+          display: 'standalone',
+          orientation: 'portrait',
           icons: [
             {
               src: 'pwa-192x192.png',
@@ -37,7 +39,37 @@ export default defineConfig(({mode}) => {
               purpose: 'any maskable'
             }
           ]
-        }
+        },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/v1\/object\/public\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'supabase-images-cache',
+                expiration: {
+                  maxEntries: 100,
+                  maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            {
+              urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts',
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 365,
+                },
+              },
+            }
+          ],
+        },
       })
     ],
     define: {

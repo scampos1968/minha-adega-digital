@@ -5,10 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Adega Pessoal</title>
     <meta name="description" content="Gerencie sua coleção pessoal de vinhos e spirits." />
+    
+    {/* PWA & iOS Meta Tags */}
     <meta name="theme-color" content="#2c1810" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Adega" />
     <link rel="apple-touch-icon" href="/pwa-192x192.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <style>
+      body { background-color: #faf7f2; margin: 0; }
+      #initial-loader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: #faf7f2;
+        z-index: 9999;
+        transition: opacity 0.5s ease-out;
+      }
+      .loader-logo {
+        font-family: serif;
+        font-style: italic;
+        font-size: 32px;
+        color: #2c1810;
+        margin-bottom: 20px;
+        animation: pulse 2s infinite ease-in-out;
+      }
+      .loader-dots { display: flex; gap: 8px; }
+      .dot { width: 6px; height: 6px; background: #5a2e14; border-radius: 50%; animation: dot-bounce 1.4s infinite ease-in-out; }
+      .dot:nth-child(2) { animation-delay: 0.2s; }
+      .dot:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+      @keyframes dot-bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+    </style>
   </head>
   <body>
+    <div id="initial-loader">
+      <div class="loader-logo">Adega</div>
+      <div class="loader-dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
