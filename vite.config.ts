@@ -8,11 +8,11 @@ export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
     plugins: [
-      react(), 
+      react(),
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['apple-touch-icon.png', 'icon-adega-v3.png'],
+        includeAssets: ['apple-touch-icon.png', 'adega-icon.png', 'pwa-512x512.png'],
         manifest: {
           name: 'Adega Pessoal',
           short_name: 'Adega',
@@ -28,7 +28,7 @@ export default defineConfig(({mode}) => {
               type: 'image/png'
             },
             {
-              src: 'icon-adega-v3.png',
+              src: 'adega-icon.png',
               sizes: '192x192',
               type: 'image/png'
             },
@@ -82,7 +82,7 @@ export default defineConfig(({mode}) => {
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
     },
   };
