@@ -524,7 +524,7 @@ export function StatsModal({ onClose, wines, spirits, consumptions, spiritCons, 
             onClick={onClose}
             className="w-full py-3.5 sm:py-4 bg-brand-wine text-white rounded-xl sm:rounded-[22px] text-sm font-bold shadow-lg shadow-brand-wine/10 hover:brightness-110 active:scale-[0.99] transition-all"
            >
-              Entendido
+              Fechar
            </button>
         </div>
       </motion.div>

@@ -844,7 +844,7 @@ function LoginScreen({ onAdminLogin, onGuestLogin }: { onAdminLogin: (token: str
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-white border border-parchment rounded-lg text-sm focus:outline-none focus:border-brand-wine transition-all"
+                className="w-full px-4 py-3 bg-white border border-parchment rounded-lg text-base sm:text-sm focus:outline-none focus:border-brand-wine transition-all"
                 placeholder="seu@email.com"
               />
             </div>
@@ -855,7 +855,7 @@ function LoginScreen({ onAdminLogin, onGuestLogin }: { onAdminLogin: (token: str
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-white border border-parchment rounded-lg text-sm focus:outline-none focus:border-brand-wine transition-all"
+                className="w-full px-4 py-3 bg-white border border-parchment rounded-lg text-base sm:text-sm focus:outline-none focus:border-brand-wine transition-all"
                 placeholder="••••••••"
               />
             </div>

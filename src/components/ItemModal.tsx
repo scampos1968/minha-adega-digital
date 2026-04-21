@@ -176,7 +176,7 @@ export function ItemModal({ item, mode, adegas, activeAdegaId, onClose, onSave, 
                       type="text" 
                       value={formData.producer}
                       onChange={(e) => setFormData(prev => ({ ...prev, producer: e.target.value }))}
-                      className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-sm focus:border-brand-gold/40 outline-none transition-all font-medium text-text-main"
+                      className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-base sm:text-sm focus:border-brand-gold/40 outline-none transition-all font-medium text-text-main"
                     />
                   </div>
                   <div className="space-y-2">
@@ -187,7 +187,7 @@ export function ItemModal({ item, mode, adegas, activeAdegaId, onClose, onSave, 
                         type="text" 
                         value={formData.country}
                         onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
-                        className="w-full bg-white border border-black/5 rounded-[18px] py-3 pl-11 pr-4 text-sm focus:border-brand-gold/40 outline-none transition-all font-medium text-text-main"
+                        className="w-full bg-white border border-black/5 rounded-[18px] py-3 pl-11 pr-4 text-base sm:text-sm focus:border-brand-gold/40 outline-none transition-all font-medium text-text-main"
                       />
                     </div>
                   </div>
@@ -199,7 +199,7 @@ export function ItemModal({ item, mode, adegas, activeAdegaId, onClose, onSave, 
                     <select 
                       value={formData.adegaId}
                       onChange={(e) => setFormData(prev => ({ ...prev, adegaId: e.target.value }))}
-                      className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-sm focus:border-brand-gold/40 outline-none transition-all appearance-none font-semibold text-text-main shadow-sm"
+                      className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-base sm:text-sm focus:border-brand-gold/40 outline-none transition-all appearance-none font-semibold text-text-main shadow-sm"
                     >
                       {adegas.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                     </select>
@@ -228,7 +228,7 @@ export function ItemModal({ item, mode, adegas, activeAdegaId, onClose, onSave, 
                   <select 
                     value={formData.type}
                     onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
-                    className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-sm focus:border-brand-gold/40 outline-none transition-all appearance-none font-semibold text-text-main shadow-sm"
+                    className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-base sm:text-sm focus:border-brand-gold/40 outline-none transition-all appearance-none font-semibold text-text-main shadow-sm"
                   >
                     {isWine ? (
                       ['Tinto', 'Branco', 'Rosé', 'Espumante', 'Porto', 'Sobremesa'].map(t => <option key={t} value={t}>{t}</option>)
@@ -247,7 +247,7 @@ export function ItemModal({ item, mode, adegas, activeAdegaId, onClose, onSave, 
                         value={formData.vintage}
                         onChange={(e) => setFormData(prev => ({ ...prev, vintage: e.target.value }))}
                         placeholder="Ex: 2018"
-                        className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-sm focus:border-brand-gold/40 outline-none transition-all font-medium text-text-main"
+                        className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-base sm:text-sm focus:border-brand-gold/40 outline-none transition-all font-medium text-text-main"
                       />
                     </div>
                     <div className="space-y-2">
@@ -257,7 +257,7 @@ export function ItemModal({ item, mode, adegas, activeAdegaId, onClose, onSave, 
                         value={formData.grape}
                         onChange={(e) => setFormData(prev => ({ ...prev, grape: e.target.value }))}
                         placeholder="Ex: Cabernet"
-                        className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-sm focus:border-brand-gold/40 outline-none transition-all font-medium text-text-main"
+                        className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-base sm:text-sm focus:border-brand-gold/40 outline-none transition-all font-medium text-text-main"
                       />
                     </div>
                     <div className="space-y-2">
@@ -289,7 +289,7 @@ export function ItemModal({ item, mode, adegas, activeAdegaId, onClose, onSave, 
                         type="text" 
                         value={formData.region}
                         onChange={(e) => setFormData(prev => ({ ...prev, region: e.target.value }))}
-                        className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-sm focus:border-brand-gold/40 outline-none transition-all font-medium text-text-main"
+                        className="w-full bg-white border border-black/5 rounded-[18px] py-3 px-4 text-base sm:text-sm focus:border-brand-gold/40 outline-none transition-all font-medium text-text-main"
                       />
                     </div>
                     <div className="space-y-2">
@@ -315,7 +315,7 @@ export function ItemModal({ item, mode, adegas, activeAdegaId, onClose, onSave, 
                     value={formData.notes}
                     onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                     placeholder="Fatos históricos, valor de compra, presente de quem..."
-                    className="w-full bg-white border border-black/5 rounded-[22px] py-4 px-5 text-sm focus:border-brand-gold/40 outline-none transition-all resize-none font-medium text-text-main shadow-sm"
+                    className="w-full bg-white border border-black/5 rounded-[22px] py-4 px-5 text-base sm:text-sm focus:border-brand-gold/40 outline-none transition-all resize-none font-medium text-text-main shadow-sm"
                  />
               </div>
             )}

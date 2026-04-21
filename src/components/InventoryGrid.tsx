@@ -143,7 +143,7 @@ export function InventoryGrid({ groupedItems, mode, adegas, isAdmin, groupBy, on
             placeholder={`Buscar...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-cream-dark/50 border border-black/5 rounded-xl py-2 pl-8 pr-8 text-[12px] font-medium outline-none focus:border-brand-wine/20 transition-all text-text-main"
+            className="w-full bg-cream-dark/50 border border-black/5 rounded-xl py-2 pl-8 pr-8 text-[16px] sm:text-[12px] font-medium outline-none focus:border-brand-wine/20 transition-all text-text-main"
           />
           {search && (
             <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-brand-wine p-0.5">

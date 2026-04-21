@@ -157,7 +157,7 @@ export function DrinkModal({ item, mode, isAdmin, onClose, onSave }: DrinkModalP
                 placeholder="Ou digite..." 
                 value={occasion}
                 onChange={(e) => setOccasion(e.target.value)}
-                className="w-full bg-white border border-black/10 rounded-xl py-2.5 px-4 text-[13px] focus:outline-none focus:border-brand-wine/20 transition-all font-sans italic"
+                className="w-full bg-white border border-black/10 rounded-xl py-2.5 px-4 text-base sm:text-[13px] focus:outline-none focus:border-brand-wine/20 transition-all font-sans italic"
               />
             </div>
           </div>
@@ -172,7 +172,7 @@ export function DrinkModal({ item, mode, isAdmin, onClose, onSave }: DrinkModalP
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Descreva os aromas, taninos, finalização..."
-              className="w-full bg-white border border-black/10 rounded-2xl py-4 px-5 text-[14px] leading-relaxed focus:outline-none focus:border-brand-wine/20 transition-all resize-none shadow-inner italic font-serif"
+              className="w-full bg-white border border-black/10 rounded-2xl py-4 px-5 text-base sm:text-[14px] leading-relaxed focus:outline-none focus:border-brand-wine/20 transition-all resize-none shadow-inner italic font-serif"
             />
             <MessageSquareCode size={14} className="absolute top-4 right-4 text-brand-wine/30" />
           </div>
@@ -187,7 +187,7 @@ export function DrinkModal({ item, mode, isAdmin, onClose, onSave }: DrinkModalP
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Código de Autorização"
-                className="w-full max-w-[200px] bg-white border border-brand-wine/20 rounded-xl py-2.5 px-4 text-center font-mono tracking-[4px] outline-none text-sm placeholder:tracking-normal placeholder:font-sans placeholder:text-[11px]"
+                className="w-full max-w-[200px] bg-white border border-brand-wine/20 rounded-xl py-2.5 px-4 text-center font-mono tracking-[4px] outline-none text-base sm:text-sm placeholder:tracking-normal placeholder:font-sans placeholder:text-[11px]"
               />
             </div>
           </div>
