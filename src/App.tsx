@@ -1069,28 +1069,41 @@ function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }
     return a.name.localeCompare(b.name);
   });
 
-  const allAdegas = [...sortedAdegas, { id: 'all', name: 'All', emoji: '🏢' }];
-  
+  const allAdegas = [...sortedAdegas, { id: 'all', name: 'All', emoji: '' }];
+
   return (
-    <div className="flex flex-nowrap gap-1.5 pb-1 md:flex-wrap md:gap-3 scroll-smooth">
+    <div className="flex flex-nowrap gap-2 pb-1 md:flex-wrap md:gap-3">
       {allAdegas.map((a) => {
         const count = mode === 'wines'
           ? (a.id === 'all' ? wines.reduce((acc: any, w: any) => acc + w.qty, 0) : wines.filter((w: any) => w.adegaId === a.id).reduce((acc: any, w: any) => acc + w.qty, 0))
           : (a.id === 'all' ? spirits.length : spirits.filter((s: any) => s.adegaId === a.id).length);
 
+        const isActive = activeId === a.id;
+
         return (
           <button
             key={a.id}
             onClick={() => onChange(a.id)}
-            className={`flex items-center gap-1.5 py-1.5 px-3 sm:py-2 sm:px-4 rounded-[18px] border transition-all duration-500 whitespace-nowrap font-sans text-xs sm:text-sm active:scale-[0.96] ${
-              activeId === a.id
-                ? 'bg-brand-wine text-white border-brand-wine shadow-[0_8px_20px_-5px_rgba(74,14,14,0.3)] ring-2 ring-brand-wine/10'
-                : 'bg-white text-text-sub border-black/5 hover:bg-cream-dark'
-            }`}
+            className={`flex items-center gap-1.5 rounded-[16px] border transition-all duration-300 whitespace-nowrap font-sans active:scale-[0.96]
+              py-1.5 px-3 sm:py-2 sm:px-4
+              ${isActive
+                ? 'bg-brand-wine text-white border-brand-wine shadow-lg'
+                : 'bg-white text-text-sub border-black/8 hover:bg-cream-dark'
+              }`}
           >
-            <span className="text-sm">{a.emoji}</span>
-            <span className="font-bold tracking-tight">{a.name}</span>
-            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${activeId === a.id ? 'bg-white/20 text-white' : 'bg-black/5 text-text-muted'}`}>
+            {/* Mobile: emoji only (or "All" text for the all-badge) */}
+            {a.id === 'all' ? (
+              <span className="text-[11px] font-bold sm:hidden">All</span>
+            ) : (
+              <span className="text-[15px] sm:hidden">{a.emoji}</span>
+            )}
+
+            {/* Desktop: emoji + name */}
+            <span className="text-sm hidden sm:inline">{a.emoji}</span>
+            <span className="text-xs font-bold tracking-tight hidden sm:inline">{a.name}</span>
+
+            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center leading-none
+              ${isActive ? 'bg-white/25 text-white' : 'bg-black/6 text-text-muted'}`}>
               {count}
             </span>
           </button>
