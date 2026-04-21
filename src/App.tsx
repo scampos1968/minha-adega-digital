@@ -96,7 +96,7 @@ export default function App() {
   }
 
   const itemsToShow = mode === 'wines' 
-    ? (activeAdega === 'all' ? wines : wines.filter(w => w.adegaId === activeAdega))
+    ? (activeAdega === 'all' ? wines : wines.filter(w => w.adegaId === activeAdega)).filter(w => w.qty > 0)
     : (activeAdega === 'all' ? spirits : spirits.filter(s => s.adegaId === activeAdega));
 
   const groupedItems = useMemo(() => {

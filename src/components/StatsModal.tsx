@@ -28,23 +28,42 @@ export function StatsModal({ onClose, wines, spirits, consumptions, spiritCons, 
   let filteredConsumptions = consumptions;
   let filteredSpiritCons = spiritCons;
 
-  if (context) {
-    if (context.view === 'cellar') {
-      if (context.adegaId !== 'all') {
-        filteredWines = wines.filter(w => w.adegaId === context.adegaId);
-        filteredSpirits = spirits.filter(s => s.adegaId === context.adegaId);
-      }
+  if (!context || context.view === 'cellar') {
+    // Current inventory: exclude items with qty 0
+    filteredWines = wines.filter(w => w.qty > 0);
+    filteredSpirits = spirits.filter(s => s.qty > 0);
+    
+    if (context && context.adegaId !== 'all') {
+      filteredWines = filteredWines.filter(w => w.adegaId === context.adegaId);
+      filteredSpirits = filteredSpirits.filter(s => s.adegaId === context.adegaId);
+    }
+  } else if (context.view === 'history') {
+    // History reports: analyze consumed items
+    if (context.mode === 'wines') {
+      // Use items from history (can have duplicates if consumed multiple times, which is correct for history volume)
+      filteredWines = consumptions
+        .filter(c => context.adegaId === 'all' ? true : c.wineSnapshot.adegaId === context.adegaId)
+        .map(c => c.wineSnapshot as WineType);
+    } else {
+      filteredSpirits = spiritCons
+        .filter(c => context.adegaId === 'all' ? true : c.spiritSnapshot.adegaId === context.adegaId)
+        .map(c => c.spiritSnapshot as Spirit);
     }
   }
 
   const activeAdega = context?.adegaId === 'all' ? { id: 'all', name: 'Todas as Adegas', emoji: '🏢' } : (adegas.find(a => a.id === context?.adegaId) || { id: 'all', name: 'Todas as Adegas', emoji: '🏢' });
 
-  const totalWines = filteredWines.reduce((acc, w) => acc + w.qty, 0);
-  const totalSpirits = filteredSpirits.reduce((acc, s) => acc + s.qty, 0);
+  const totalWines = context?.view === 'history' 
+    ? consumptions.filter(c => context.adegaId === 'all' ? true : c.wineSnapshot.adegaId === context.adegaId).reduce((acc, c) => acc + (c.qty || 0), 0)
+    : filteredWines.reduce((acc, w) => acc + w.qty, 0);
+    
+  const totalSpirits = context?.view === 'history'
+    ? spiritCons.filter(c => context.adegaId === 'all' ? true : c.spiritSnapshot.adegaId === context.adegaId).length
+    : filteredSpirits.reduce((acc, s) => acc + s.qty, 0);
 
   // Specialized Wine Stats
   const wineStats = React.useMemo(() => {
-    if (context?.mode !== 'wines' || context?.view !== 'cellar') return null;
+    if (context?.mode !== 'wines' && !isGlobal) return null;
 
     const labels = filteredWines.length;
     const itemsWithScore = filteredWines.filter(w => w.score && w.score > 0);
@@ -99,7 +118,7 @@ export function StatsModal({ onClose, wines, spirits, consumptions, spiritCons, 
 
   // Specialized Spirits Stats
   const spiritStats = React.useMemo(() => {
-    if (context?.mode !== 'spirits' || context?.view !== 'cellar') return null;
+    if (context?.mode !== 'spirits' && !isGlobal) return null;
 
     const labels = filteredSpirits.length;
     const itemsWithScore = filteredSpirits.filter(s => s.score && s.score > 0);
@@ -204,7 +223,9 @@ export function StatsModal({ onClose, wines, spirits, consumptions, spiritCons, 
                 ].map((card, i) => (
                   <div key={i} className="bg-white/80 p-4 rounded-xl border border-black/5 shadow-sm">
                     <p className="text-3xl font-serif text-text-main font-bold leading-none">{card.value}</p>
-                    <p className="text-[9px] font-bold text-text-muted mt-2 tracking-wider uppercase">{card.label}</p>
+                    <p className="text-[9px] font-bold text-text-muted mt-2 tracking-wider uppercase">
+                      {card.label === 'RÓTULOS' && context?.view === 'history' ? 'EVENTOS' : card.label === 'GARRAFAS' && context?.view === 'history' ? 'CONSUMIDAS' : card.label}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -308,7 +329,9 @@ export function StatsModal({ onClose, wines, spirits, consumptions, spiritCons, 
                 ].map((card, i) => (
                   <div key={i} className="bg-[#f2eee8] p-4 rounded-xl border border-black/5 shadow-sm">
                     <p className="text-3xl font-serif text-text-main font-bold leading-none">{card.value}</p>
-                    <p className="text-[9px] font-bold text-text-muted mt-2 tracking-wider uppercase">{card.label}</p>
+                    <p className="text-[9px] font-bold text-text-muted mt-2 tracking-wider uppercase">
+                      {card.label === 'SPIRITS' && context?.view === 'history' ? 'EVENTOS' : card.label}
+                    </p>
                   </div>
                 ))}
               </div>
