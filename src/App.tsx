@@ -598,6 +598,11 @@ export default function App() {
         </button>
       </nav>
 
+      {/* Version Tag for Debugging */}
+      <div className="fixed bottom-[calc(0.5rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 text-[10px] text-black/10 pointer-events-none z-50">
+        v5.0.2
+      </div>
+
       {/* Modals */}
       <AnimatePresence>
         {activeModal === 'expert' && selectedItem && (
