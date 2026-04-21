@@ -82,27 +82,26 @@ export function SpiritCard({ spirit, adega, onDrink, onEdit, onDelete, onStock, 
           </div>
         </div>
 
-        <div className="p-5 pt-4 pb-4 flex-1 flex flex-col gap-0.5 min-h-[120px] bg-white relative z-20">
-          <h3 className="font-serif italic text-text-main text-[17px] leading-tight h-[2.8rem] overflow-hidden line-clamp-2 flex items-center pr-2">
+        <div className="px-4 pt-3 pb-3 flex-1 flex flex-col bg-white relative z-20">
+          <h3 className="font-serif italic text-text-main text-[16px] leading-snug min-h-[2.6rem] line-clamp-3 mb-1">
             {spirit.name}
           </h3>
           {spirit.producer && (
-            <p className="text-[13px] font-bold text-text-sub truncate opacity-70">{spirit.producer}</p>
+            <p className="text-[12px] text-text-sub truncate opacity-70 mb-0.5">{spirit.producer}</p>
           )}
           {(spirit.country || spirit.aging) && (
-            <p className="text-[12px] text-text-muted flex items-center gap-1.5 mt-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-gold/40" />
-              {spirit.country} {spirit.country && spirit.aging && '·'} {spirit.aging}
+            <p className="text-[11px] text-text-muted mb-0.5">
+              {spirit.country}{spirit.country && spirit.aging ? ' · ' : ''}{spirit.aging}
             </p>
           )}
 
-          <div className="mt-auto pt-3 flex items-center justify-between border-t border-black/5">
-            <div className="flex items-center gap-1 text-[11px] text-text-main font-bold">
-               <Package size={12} className={spirit.isOpen ? 'text-emerald-700' : 'text-brand-wine/40'} />
-               <span>{spirit.isOpen ? 'Aberta' : `${spirit.qty} un`}</span>
+          <div className="mt-auto pt-2.5 flex items-center justify-between border-t border-black/5">
+            <div className="flex items-center gap-1 text-[11px] text-text-muted">
+              <Package size={11} className={spirit.isOpen ? 'text-emerald-600 opacity-70' : 'opacity-50'} />
+              <span>{spirit.isOpen ? 'Aberta' : `${spirit.qty} un`}</span>
             </div>
             {adega && (
-              <div className="flex items-center gap-1 text-[10px] text-text-sub font-bold">
+              <div className="flex items-center gap-1 text-[11px] text-text-muted">
                 <span>{adega.emoji}</span>
                 <span>{adega.name}</span>
               </div>

@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { Wine, Adega } from '../types';
-import { Star, MessageSquareCode, GlassWater, Package, Trash2, Edit3, Camera, BookOpen, X, Maximize2 } from 'lucide-react';
+import { Star, GlassWater, Package, Trash2, Edit3, BookOpen, X, Maximize2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface WineCardProps {
   wine: Wine;
   adega?: Adega;
-  onWineClick?: (wine: Wine) => void;
   onDrink?: (wine: Wine) => void;
   onEdit?: (wine: Wine) => void;
   onDelete?: (wine: Wine) => void;
@@ -15,124 +14,119 @@ interface WineCardProps {
   isAdmin: boolean;
 }
 
-const TYPE_COLORS: Record<string, string> = {
-  Tinto: 'text-indigo-900',
-  Branco: 'text-emerald-800',
-  Rosé: 'text-rose-800',
-  Espumante: 'text-sky-800',
-  Sobremesa: 'text-amber-800',
-  Laranja: 'text-orange-800',
-  Porto: 'text-violet-800',
-};
-
-const TYPE_BGS: Record<string, string> = {
-  Tinto: 'bg-indigo-50',
-  Branco: 'bg-emerald-50',
-  Rosé: 'bg-rose-50',
-  Espumante: 'bg-sky-50',
-  Sobremesa: 'bg-amber-50',
-  Laranja: 'bg-orange-50',
-  Porto: 'bg-violet-50',
-};
+function getDrinkStatus(wine: Wine) {
+  if (!wine.drinkFrom || !wine.drinkUntil) return null;
+  const yr = new Date().getFullYear();
+  if (yr > wine.drinkUntil)
+    return { icon: '🚫', text: `Passou do ponto (${wine.drinkUntil})`, color: 'text-red-500' };
+  if (wine.drinkUntil - yr <= 1)
+    return { icon: '⚠️', text: 'Passando do ponto', color: 'text-amber-500' };
+  if (yr >= wine.drinkFrom)
+    return { icon: '🎯', text: `Melhor até: ${wine.drinkUntil}`, color: 'text-emerald-600' };
+  return null;
+}
 
 export function WineCard({ wine, adega, onDrink, onEdit, onDelete, onStock, onExpert, isAdmin }: WineCardProps) {
   const [showZoom, setShowZoom] = useState(false);
-  const textColor = TYPE_COLORS[wine.type] || 'text-indigo-600';
-  const bgColor = TYPE_BGS[wine.type] || 'bg-slate-50';
-
   const isEmpty = wine.qty === 0 || (['Porto', 'Sobremesa'].includes(wine.type) && wine.level === 0);
+  const drinkStatus = getDrinkStatus(wine);
+  const yr = new Date().getFullYear();
+  const inWindow = wine.drinkFrom && wine.drinkUntil && yr >= wine.drinkFrom && yr <= wine.drinkUntil;
 
   return (
     <>
-      <motion.div 
+      <motion.div
         layout
-        className={`group bg-white rounded-[28px] border border-black/5 shadow-old overflow-hidden flex flex-col transition-all active:scale-[0.98] ${isEmpty ? 'opacity-[0.6]' : ''}`}
+        className={`group bg-white rounded-[28px] border border-black/5 shadow-old overflow-hidden flex flex-col transition-all active:scale-[0.98] ${isEmpty ? 'opacity-60' : ''}`}
       >
-        {/* Image Area */}
-        <div 
-          className={`relative h-[200px] flex items-center justify-center overflow-hidden bg-cream-dark cursor-zoom-in`}
+        {/* Image */}
+        <div
+          className="relative h-[190px] flex items-center justify-center overflow-hidden bg-cream-dark cursor-zoom-in"
           onClick={() => wine.imageUrl && setShowZoom(true)}
         >
           {wine.imageUrl ? (
-            <img 
-              src={wine.imageUrl} 
-              alt={wine.name} 
+            <img
+              src={wine.imageUrl}
+              alt={wine.name}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
           ) : (
-            <div className="flex flex-col items-center gap-2 opacity-20">
-              <span className="text-6xl">🍷</span>
-              <span className={`text-[10px] font-bold uppercase tracking-[0.2em] text-brand-wine mt-2`}>{wine.type}</span>
+            <div className="flex flex-col items-center gap-1 opacity-20">
+              <span className="text-5xl">🍷</span>
+              <span className="text-[9px] font-bold uppercase tracking-widest text-brand-wine">{wine.type}</span>
             </div>
           )}
 
           {wine.imageUrl && (
-            <div className="absolute top-3 right-3 p-2 bg-black/10 backdrop-blur-md rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity z-20">
-              <Maximize2 size={12} />
+            <div className="absolute top-3 right-3 p-1.5 bg-black/10 backdrop-blur-md rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity z-20">
+              <Maximize2 size={11} />
             </div>
           )}
 
-          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/20 to-transparent z-10" />
-          
-          {/* Badges */}
-          <div className="absolute inset-0 p-4 flex flex-col justify-between pointer-events-none z-10">
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/25 to-transparent z-10" />
+
+          {/* Image badges */}
+          <div className="absolute inset-0 p-3 flex flex-col justify-between pointer-events-none z-10">
             <div className="flex justify-between items-start">
               {wine.vintage ? (
-                <div className="bg-white/90 px-3 py-1 rounded-full text-[10px] font-bold text-brand-wine shadow-sm backdrop-blur-sm tracking-tight capitalize">
+                <span className="bg-white/90 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[10px] font-bold text-brand-wine shadow-sm">
                   {wine.vintage}
-                </div>
-              ) : <div />}
-              {wine.score && (
-                <div className="bg-brand-gold px-3 py-1 rounded-full text-[10px] font-bold text-white flex items-center gap-1 shadow-md tracking-tight capitalize">
-                  <Star size={10} fill="currentColor" />
-                  {wine.score}
-                </div>
+                </span>
+              ) : <span />}
+              {wine.score != null && (
+                <span className="bg-brand-gold px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white flex items-center gap-1 shadow-md">
+                  <Star size={9} fill="currentColor" />
+                  {wine.score} pts
+                </span>
               )}
             </div>
-            
+
             <div className="flex justify-between items-end">
-              <div className="bg-white/90 px-3 py-1 rounded-full text-[9px] font-bold text-text-main shadow-sm backdrop-blur-sm uppercase tracking-wider">
+              <span className="bg-white/90 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[9px] font-bold text-text-main shadow-sm">
                 {wine.type}
-              </div>
+              </span>
               {isEmpty ? (
-                <div className="bg-black/40 px-3 py-1 rounded-full text-[9px] font-bold text-white backdrop-blur-sm uppercase tracking-wider">
-                  {wine.type === 'Porto' || wine.type === 'Sobremesa' ? 'Vazia' : 'Consumido'}
-                </div>
-              ) : (
-                (wine.drinkFrom && wine.drinkUntil && 
-                 new Date().getFullYear() >= wine.drinkFrom && 
-                 new Date().getFullYear() <= wine.drinkUntil) && (
-                  <div className="bg-emerald-500 px-3 py-1 rounded-full text-[9px] font-bold text-white shadow-md uppercase tracking-wider ring-2 ring-white/20">
-                     No ponto
-                  </div>
-                )
+                <span className="bg-black/40 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[9px] font-bold text-white">
+                  {['Porto', 'Sobremesa'].includes(wine.type) ? 'Vazia' : 'Consumido'}
+                </span>
+              ) : inWindow && (
+                <span className="bg-emerald-500 px-2.5 py-0.5 rounded-full text-[9px] font-bold text-white shadow-md ring-2 ring-white/20">
+                  No ponto
+                </span>
               )}
             </div>
           </div>
         </div>
 
         {/* Body */}
-        <div className="p-5 pt-4 pb-4 flex-1 flex flex-col gap-0.5 min-h-[120px] bg-white relative z-20">
-          <h3 className="font-serif italic text-text-main text-[17px] leading-tight h-[2.8rem] overflow-hidden line-clamp-2 flex items-center pr-2">
+        <div className="px-4 pt-3 pb-3 flex-1 flex flex-col bg-white relative z-20">
+          <h3 className="font-serif italic text-text-main text-[16px] leading-snug min-h-[2.6rem] line-clamp-3 mb-1">
             {wine.name}
           </h3>
+
           {wine.producer && (
-            <p className="text-[13px] font-bold text-text-sub truncate opacity-70">{wine.producer}</p>
+            <p className="text-[12px] text-text-sub truncate opacity-70 mb-0.5">{wine.producer}</p>
           )}
+
           {(wine.country || wine.grape) && (
-            <p className="text-[12px] text-text-muted flex items-center gap-1.5 mt-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-gold/40" />
-              {wine.country} {wine.country && wine.grape && '·'} {wine.grape}
+            <p className="text-[11px] text-text-muted mb-0.5">
+              {wine.country}{wine.country && wine.grape ? ' · ' : ''}{wine.grape}
             </p>
           )}
 
-          <div className="mt-auto pt-3 flex items-center justify-between border-t border-black/5">
-            <div className="flex items-center gap-1 text-[11px] text-text-main font-bold">
-               <Package size={12} className="text-brand-wine/40" />
-               <span>{wine.qty} un</span>
+          {drinkStatus && (
+            <p className={`text-[11px] font-medium mt-0.5 ${drinkStatus.color}`}>
+              {drinkStatus.icon} {drinkStatus.text}
+            </p>
+          )}
+
+          <div className="mt-auto pt-2.5 flex items-center justify-between border-t border-black/5">
+            <div className="flex items-center gap-1 text-[11px] text-text-muted">
+              <Package size={11} className="opacity-50" />
+              <span>{wine.qty} un</span>
             </div>
             {adega && (
-              <div className="flex items-center gap-1 text-[10px] text-text-sub font-bold">
+              <div className="flex items-center gap-1 text-[11px] text-text-muted">
                 <span>{adega.emoji}</span>
                 <span>{adega.name}</span>
               </div>
@@ -159,31 +153,29 @@ export function WineCard({ wine, adega, onDrink, onEdit, onDelete, onStock, onEx
         </div>
       </motion.div>
 
-
       <AnimatePresence>
         {showZoom && wine.imageUrl && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowZoom(false)}
             className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               className="relative max-w-full max-h-full"
             >
-              <img 
-                src={wine.imageUrl} 
+              <img
+                src={wine.imageUrl}
                 alt={wine.name}
                 className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
               />
-              <button 
+              <button
                 onClick={(e) => { e.stopPropagation(); setShowZoom(false); }}
                 className="absolute -top-12 right-0 p-2 text-white/70 hover:text-white transition-colors"
-                title="Fechar"
               >
                 <X size={32} />
               </button>
