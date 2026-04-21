@@ -8,11 +8,11 @@ export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
     plugins: [
-      react(),
+      react(), 
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'apple-touch-icon-v2.png', 'adega-icon.png', 'pwa-512x512.png'],
+        includeAssets: ['favicon.ico', 'adega-icon.png', 'pwa-512x512.png'],
         manifest: {
           name: 'Adega Pessoal',
           short_name: 'Adega',
@@ -23,11 +23,6 @@ export default defineConfig(({mode}) => {
           orientation: 'portrait',
           icons: [
             {
-              src: 'apple-touch-icon-v2.png',
-              sizes: '180x180',
-              type: 'image/png'
-            },
-            {
               src: 'adega-icon.png',
               sizes: '192x192',
               type: 'image/png'
@@ -35,13 +30,17 @@ export default defineConfig(({mode}) => {
             {
               src: 'pwa-512x512.png',
               sizes: '512x512',
+              type: 'image/png'
+            },
+            {
+              src: 'adega-icon.png',
+              sizes: '512x512',
               type: 'image/png',
-              purpose: 'any maskable'
+              purpose: 'any'
             }
           ]
         },
         workbox: {
-          cleanupOutdatedCaches: true,
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
           runtimeCaching: [
             {
@@ -83,7 +82,7 @@ export default defineConfig(({mode}) => {
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
     },
   };

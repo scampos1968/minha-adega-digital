@@ -134,67 +134,66 @@ export function InventoryGrid({ groupedItems, mode, adegas, isAdmin, groupBy, on
   return (
     <div className="space-y-4">
       {/* Search & Filter Bar - Forced Single Line */}
-      <div className="flex flex-row items-center gap-1.5 sm:gap-3 bg-white border border-black/10 rounded-[20px] p-1.5 sm:p-2.5 mb-3 shadow-old overflow-x-auto no-scrollbar">
+      <div className="flex flex-row items-center gap-1.5 sm:gap-3 bg-white/80 backdrop-blur-md border border-black/5 rounded-[24px] p-2 mb-3 shadow-old overflow-x-auto no-scrollbar">
         {/* Compact Search Input (Much smaller) */}
-        <div className="relative w-[38%] min-w-[110px] shrink-0">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted opacity-40" size={13} />
+        <div className="relative w-[42%] min-w-[120px] shrink-0 ml-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted opacity-40" size={14} />
           <input 
             type="text"
             placeholder={`Buscar...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-cream-dark/50 border border-black/5 rounded-xl py-2 pl-8 pr-8 text-[16px] sm:text-[12px] font-medium outline-none focus:border-brand-wine/20 transition-all text-text-main"
+            className="w-full bg-cream-dark/50 border border-black/5 rounded-2xl py-2 pl-9 pr-8 text-[16px] sm:text-[13px] font-bold outline-none focus:border-brand-wine/20 transition-all text-text-main"
           />
           {search && (
             <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-brand-wine p-0.5">
-              <X size={11} />
+              <X size={12} />
             </button>
           )}
         </div>
         
         {/* The 5 Predefined Action Buttons - Same Line */}
-        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto">
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto pr-1">
           {mode === 'spirits' && (
             <SortButton 
               active={sortBy === 'level'} 
               onClick={() => setSortBy(sortBy === 'level' ? 'name' : 'level')}
-              icon={<Droplet size={16} />}
-              title="Ordenar por nível (Vazio para Cheio)"
+              icon={<Droplet size={18} />}
+              title="Nível"
             />
           )}
           <SortButton 
             active={sortBy === 'name'} 
             onClick={() => setSortBy('name')}
-            icon={<ALargeSmall size={16} />}
-            title="Ordenar por nome (A-Z)"
+            icon={<ALargeSmall size={18} />}
+            title="A-Z"
           />
           {mode === 'wines' && (
             <SortButton 
               active={sortBy === 'readiness'} 
               onClick={() => setSortBy(sortBy === 'readiness' ? 'name' : 'readiness')}
-              icon={<Hourglass size={16} />}
-              title="Mais prontos para beber"
+              icon={<Hourglass size={18} />}
+              title="Prontos"
             />
           )}
           <SortButton 
             active={sortBy === 'score'} 
             onClick={() => setSortBy(sortBy === 'score' ? 'name' : 'score')}
-            icon={<Star size={16} />}
-            title="Mais pontuados"
+            icon={<Star size={18} />}
+            title="Pontuados"
           />
           
           <div className="w-[1px] h-5 bg-black/5 mx-0.5" />
 
           <button 
             onClick={() => setShowFilters(!showFilters)}
-            className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl border transition-all shrink-0 ${
+            className={`w-10 h-10 flex items-center justify-center rounded-2xl border transition-all shrink-0 ${
               showFilters 
-                ? 'bg-brand-wine text-white border-brand-wine shadow-md scale-105' 
-                : 'bg-white border-black/10 text-text-sub hover:bg-cream-dark shadow-sm'
+                ? 'bg-brand-wine text-white border-brand-wine shadow-md' 
+                : 'bg-white border-black/10 text-text-sub hover:bg-cream-dark'
             }`}
-            title="Filtros adicionais"
           >
-            <Filter size={16} />
+            <Filter size={18} />
           </button>
         </div>
       </div>

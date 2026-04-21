@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { Wine, Spirit } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -10,17 +10,27 @@ export interface DrinkWindow {
 
 export async function calcDrinkWindowGemini(wine: Wine): Promise<DrinkWindow | null> {
   const prompt = `Você é um especialista em vinhos. Pesquise e estime a janela ideal de consumo para este vinho específico: "${wine.name}" ${wine.vintage || ""} produzido por "${wine.producer || ""}" de ${wine.country || ""}, tipo ${wine.type}, uva ${wine.grape || ""}. 
-Considere recomendações de críticos e notas de produtores. Com base nisso, retorne APENAS um objeto JSON com a janela de consumo em anos civis: {"drink_from": ANO, "drink_until": ANO}. Se não encontrar dados confiáveis, retorne {"drink_from": null, "drink_until": null}. Retorne APENAS o JSON, sem markdown ou explicações.`;
+Considere recomendações de críticos e notas de produtores. Com base nisso, retorne a janela de consumo em anos civis.`;
 
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
-        responseMimeType: "application/json"
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            drink_from: { type: Type.INTEGER, nullable: true },
+            drink_until: { type: Type.INTEGER, nullable: true }
+          },
+          required: ["drink_from", "drink_until"]
+        }
       }
     });
-    const text = response.text?.replace(/```json|```/g, "").trim();
+    
+    const text = response.text;
     return text ? JSON.parse(text) : null;
   } catch (e) {
     console.error("AI Drink Window error:", e);
@@ -59,7 +69,10 @@ ${details}`;
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: prompt
+      contents: prompt,
+      config: {
+        tools: [{ googleSearch: {} }]
+      }
     });
     return response.text || "Análise não disponível.";
   } catch (e) {
@@ -111,10 +124,41 @@ INVENTÁRIO (${inventory.length} disponíveis): ${JSON.stringify(inventory)}
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
-        responseMimeType: "application/json"
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            contexto: {
+              type: Type.OBJECT,
+              properties: {
+                pedido_interpretado: { type: Type.STRING },
+                tipo_comida: { type: Type.STRING },
+                ocasiao: { type: Type.STRING },
+                modo_festa: { type: Type.BOOLEAN }
+              },
+              required: ["pedido_interpretado", "tipo_comida", "ocasiao", "modo_festa"]
+            },
+            ranking: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  id: { type: Type.STRING },
+                  nome: { type: Type.STRING },
+                  posicao: { type: Type.INTEGER },
+                  pontuacao_total: { type: Type.NUMBER },
+                  motivo: { type: Type.STRING }
+                },
+                required: ["id", "nome", "posicao", "pontuacao_total", "motivo"]
+              }
+            }
+          },
+          required: ["contexto", "ranking"]
+        }
       }
     });
-    const raw = response.text?.replace(/```json|```/g, "").trim();
+    const raw = response.text?.trim();
     return raw ? JSON.parse(raw) : null;
   } catch (e) {
     console.error("Voice Adega AI error:", e);
@@ -139,15 +183,29 @@ Se não tiver certeza, deixe o campo como "".`;
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: [
-        { text: prompt },
-        { inlineData: { data: imageBase64.split(',')[1], mimeType: "image/jpeg" } }
-      ],
+      contents: {
+        parts: [
+          { text: prompt },
+          { inlineData: { data: imageBase64.split(',')[1], mimeType: "image/jpeg" } }
+        ]
+      },
       config: {
-        responseMimeType: "application/json"
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            nome: { type: Type.STRING },
+            produtor: { type: Type.STRING },
+            país: { type: Type.STRING },
+            safra: { type: Type.STRING },
+            uva: { type: Type.STRING },
+            tipo: { type: Type.STRING },
+            detalhes_extras: { type: Type.STRING }
+          }
+        }
       }
     });
-    const text = response.text?.replace(/```json|```/g, "").trim();
+    const text = response.text?.trim();
     return text ? JSON.parse(text) : null;
   } catch (e) {
     console.error("AI Label Analysis error:", e);

@@ -29,52 +29,52 @@ export function SpiritCard({ spirit, adega, onDrink, onEdit, onDelete, onStock, 
     <>
       <motion.div 
         layout
-        className={`group bg-white rounded-[16px] border border-black/10 shadow-old overflow-hidden flex flex-col transition-all hover:shadow-old-lg hover:-translate-y-1 ${!isAvailable ? 'opacity-[0.55]' : ''}`}
+        className={`group bg-white rounded-[28px] border border-black/5 shadow-old overflow-hidden flex flex-col transition-all active:scale-[0.98] ${!isAvailable ? 'opacity-[0.6]' : ''}`}
       >
         <div 
-          className={`relative h-[185px] flex items-center justify-center overflow-hidden bg-cream-dark cursor-zoom-in`}
+          className={`relative h-[200px] flex items-center justify-center overflow-hidden bg-cream-dark cursor-zoom-in`}
           onClick={() => spirit.imageUrl && setShowZoom(true)}
         >
           {spirit.imageUrl ? (
             <img 
               src={spirit.imageUrl} 
               alt={spirit.name} 
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
           ) : (
-            <div className="flex flex-col items-center gap-2 opacity-30">
-              <span className="text-5xl">🥃</span>
-              <span className="text-[11px] font-medium uppercase tracking-[1.2px] text-[#8B4513]">{spirit.type}</span>
+            <div className="flex flex-col items-center gap-2 opacity-20">
+              <span className="text-6xl">🥃</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8B4513] mt-2">{spirit.type}</span>
             </div>
           )}
 
           {spirit.imageUrl && (
-            <div className="absolute top-2 right-2 p-1.5 bg-black/20 backdrop-blur-md rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity z-20">
+            <div className="absolute top-3 right-3 p-2 bg-black/10 backdrop-blur-md rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity z-20">
               <Maximize2 size={12} />
             </div>
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-white/70 via-transparent to-transparent pt-[45%] z-10" />
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/20 to-transparent z-10" />
           
-          <div className="absolute inset-0 p-3 flex flex-col justify-between pointer-events-none z-10">
+          <div className="absolute inset-0 p-4 flex flex-col justify-between pointer-events-none z-10">
             <div className="flex justify-between items-start">
-               <div className="bg-white/88 px-2.5 py-1 rounded-[20px] text-[9.5px] font-medium text-text-main shadow-sm backdrop-blur-sm [font-variant:small-caps] capitalize">
+               <div className="bg-white/90 px-3 py-1 rounded-full text-[10px] font-bold text-text-main shadow-sm backdrop-blur-sm tracking-tight capitalize">
                   {spirit.type}
                 </div>
               {spirit.score && (
-                <div className="bg-white/88 px-2.5 py-1 rounded-[20px] text-[9.5px] font-medium text-brand-gold flex items-center gap-1 shadow-sm backdrop-blur-sm [font-variant:small-caps] capitalize">
+                <div className="bg-brand-gold px-3 py-1 rounded-full text-[10px] font-bold text-white flex items-center gap-1 shadow-md tracking-tight capitalize">
                   <Star size={10} fill="currentColor" />
-                  {spirit.score} Pts
+                  {spirit.score}
                 </div>
               )}
             </div>
             
             <div className="flex justify-between items-end">
-              <div className={`px-2 py-0.5 rounded-[20px] text-[9px] font-medium text-white shadow-sm backdrop-blur-sm ${getLevelColor(spirit.isOpen ? spirit.level : 100)} opacity-90 [font-variant:small-caps] capitalize tracking-wide`}>
+              <div className={`px-3 py-1 rounded-full text-[9px] font-bold text-white shadow-sm backdrop-blur-sm ${getLevelColor(spirit.isOpen ? spirit.level : 100)} opacity-90 uppercase tracking-widest`}>
                 {spirit.isOpen && spirit.level === 0 ? 'Vazia' : `Nível: ${spirit.isOpen ? spirit.level : 100}%`}
               </div>
               {spirit.abv && (
-                <div className="bg-white/88 px-2 py-0.5 rounded-[20px] text-[8.5px] font-medium text-text-muted backdrop-blur-sm [font-variant:small-caps] capitalize">
+                <div className="bg-white/90 px-3 py-1 rounded-full text-[9px] font-bold text-text-muted backdrop-blur-sm tracking-tight uppercase">
                   {spirit.abv}% Abv
                 </div>
               )}
@@ -82,50 +82,53 @@ export function SpiritCard({ spirit, adega, onDrink, onEdit, onDelete, onStock, 
           </div>
         </div>
 
-        <div className="p-4 pt-3.5 pb-3 flex-1 flex flex-col gap-1 min-h-[110px]">
-          <h3 className="font-serif italic text-text-main text-[15px] leading-tight min-h-[2.5rem] flex items-center">
+        <div className="p-5 pt-0 pb-4 flex-1 flex flex-col gap-0.5 min-h-[120px] bg-white relative z-20 -mt-4 rounded-t-[24px]">
+          <div className="h-1.5 w-10 bg-black/5 rounded-full mx-auto my-3" />
+          <h3 className="font-serif italic text-text-main text-[17px] leading-tight min-h-[2.8rem] flex items-center pr-2">
             {spirit.name}
           </h3>
           {spirit.producer && (
-            <p className="text-[12px] text-text-sub truncate">{spirit.producer}</p>
+            <p className="text-[13px] font-medium text-text-sub truncate opacity-80">{spirit.producer}</p>
           )}
           {(spirit.country || spirit.aging) && (
-            <p className="text-[12px] text-text-muted flex items-center gap-1">
+            <p className="text-[12px] text-text-muted flex items-center gap-1.5 mt-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-gold/40" />
               {spirit.country} {spirit.country && spirit.aging && '·'} {spirit.aging}
             </p>
           )}
           
-          <div className="mt-auto pt-2.5 flex items-center justify-between border-t border-black/5">
-            <div className="flex items-center gap-1.5 text-[12px] text-text-sub font-normal">
-               <Package size={13} className={spirit.isOpen ? 'text-emerald-700' : 'text-brand-wine'} />
+          <div className="mt-auto pt-4 flex items-center justify-between border-t border-black/5">
+            <div className="flex items-center gap-1.5 text-[13px] text-text-main font-bold">
+               <Package size={14} className={spirit.isOpen ? 'text-emerald-700' : 'text-brand-wine'} />
                <span>{spirit.isOpen ? 'ABERTA' : `${spirit.qty} un.`}</span>
             </div>
             {adega && (
-              <div className="text-[11px] text-text-muted font-normal">
+              <div className="flex items-center gap-1.5 py-1 px-2.5 bg-cream-dark rounded-xl text-[11px] text-text-sub font-bold">
                 <span>{adega.emoji}</span>
-                <span className="ml-1">{adega.name}</span>
+                <span>{adega.name}</span>
               </div>
             )}
           </div>
         </div>
 
-        <div className={`grid ${isAdmin ? 'grid-cols-[0.7fr_1fr_1.8fr_0.7fr_0.7fr]' : 'grid-cols-2'} border-t border-black/10`}>
+        <div className={`p-4 pt-0 grid ${isAdmin ? 'grid-cols-5' : 'grid-cols-2'} gap-2`}>
           {isAdmin ? (
             <>
-              <ActionButton icon={<Edit3 size={12} />} label="Editar" onClick={() => onEdit?.(spirit)} />
-              <ActionButton icon={<BookOpen size={12} />} label="Análise" onClick={() => onExpert?.(spirit)} showLabel />
-              <ActionButton icon={<GlassWater size={12} />} label="Consumo" onClick={() => onDrink?.(spirit)} showLabel />
-              <ActionButton icon={<Package size={12} />} label="Estoque" onClick={() => onStock?.(spirit)} />
-              <ActionButton icon={<Trash2 size={12} />} label="Apagar" onClick={() => onDelete?.(spirit)} className="hover:bg-red-50 hover:text-red-700" />
+              <CircularAction icon={<Edit3 size={16} />} color="bg-cream-deep text-text-sub" onClick={() => onEdit?.(spirit)} />
+              <CircularAction icon={<BookOpen size={16} />} color="bg-brand-wine/10 text-brand-wine" onClick={() => onExpert?.(spirit)} />
+              <CircularAction icon={<GlassWater size={16} />} color="bg-brand-wine text-white" onClick={() => onDrink?.(spirit)} />
+              <CircularAction icon={<Package size={16} />} color="bg-cream-deep text-text-sub" onClick={() => onStock?.(spirit)} />
+              <CircularAction icon={<Trash2 size={16} />} color="bg-red-50 text-red-600" onClick={() => onDelete?.(spirit)} />
             </>
           ) : (
             <>
-              <ActionButton icon={<BookOpen size={13} />} label="Análise" onClick={() => onExpert?.(spirit)} showLabel />
-              <ActionButton icon={<GlassWater size={13} />} label="Consumo" onClick={() => onDrink?.(spirit)} showLabel />
+              <CircularAction icon={<BookOpen size={18} />} label="Análise" color="bg-brand-wine/10 text-brand-wine" onClick={() => onExpert?.(spirit)} showLabel />
+              <CircularAction icon={<GlassWater size={18} />} label="Beber" color="bg-brand-wine text-white" onClick={() => onDrink?.(spirit)} showLabel />
             </>
           )}
         </div>
       </motion.div>
+
 
       <AnimatePresence>
         {showZoom && spirit.imageUrl && (
@@ -165,14 +168,18 @@ export function SpiritCard({ spirit, adega, onDrink, onEdit, onDelete, onStock, 
   );
 }
 
-function ActionButton({ icon, label, onClick, className = '', showLabel = false }: any) {
+function CircularAction({ icon, label, onClick, className = '', color = '', showLabel = false }: any) {
   return (
     <button 
       onClick={onClick}
-      className={`py-2.5 border-l border-black/10 first:border-l-0 flex items-center justify-center gap-1.5 text-[10px] uppercase font-sans text-text-sub hover:bg-cream-dark transition-colors ${className}`}
+      className={`flex flex-col items-center justify-center gap-1.5 transition-all active:scale-90 ${showLabel ? 'flex-1' : ''} ${className}`}
     >
-      <span className="flex items-center">{icon}</span>
-      {(showLabel || window.innerWidth > 640) && <span className="hidden xs:inline">{label}</span>}
+      <div className={`w-11 h-11 flex items-center justify-center rounded-2xl shadow-sm ${color}`}>
+        {icon}
+      </div>
+      {showLabel && (
+        <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">{label}</span>
+      )}
     </button>
   );
 }

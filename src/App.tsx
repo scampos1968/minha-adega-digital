@@ -461,7 +461,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col selection:bg-indigo-100 selection:text-indigo-600 font-sans antialiased">
+    <div className="min-h-screen flex flex-col bg-cream/30 selection:bg-brand-wine/10 selection:text-brand-wine font-sans antialiased pb-[env(safe-area-inset-bottom)]">
       <Header 
         mode={mode} 
         setMode={setMode} 
@@ -475,17 +475,18 @@ export default function App() {
         onReports={() => setActiveModal('reports')}
       />
       
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 pt-1 pb-24 md:px-8">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 pt-4 pb-32 md:px-8">
         <AnimatePresence mode="wait">
           {view === 'cellar' ? (
             <motion.div 
               key="cellar"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              className="space-y-1"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="space-y-4"
             >
-              <div className="overflow-x-auto -mx-4 px-4 no-scrollbar pb-2">
+              <div className="sticky top-[64px] z-40 -mx-4 px-4 bg-cream/80 backdrop-blur-md py-2 overflow-x-auto no-scrollbar border-b border-black/5">
                 <AdegaTabs 
                   adegas={adegas} 
                   activeId={activeAdega} 
@@ -498,8 +499,8 @@ export default function App() {
               </div>
 
               {adegas.length === 0 && syncStatus === 'ok' && (
-                <div className="p-4 bg-cream-dark border border-parchment rounded-xl text-text-sub text-xs font-medium flex items-center gap-2">
-                  <Package size={14} />
+                <div className="p-6 bg-white border border-black/5 rounded-3xl text-text-muted text-xs font-medium flex flex-col items-center gap-3 text-center">
+                  <div className="w-12 h-12 bg-cream-dark rounded-full flex items-center justify-center text-xl">📦</div>
                   <span>Sincronizado, mas nenhuma adega foi encontrada.</span>
                 </div>
               )}
@@ -517,9 +518,10 @@ export default function App() {
           ) : (
             <motion.div 
               key="history"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
               className="space-y-4"
             >
               <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
@@ -536,8 +538,11 @@ export default function App() {
                     );
                   })
                 ) : (
-                  <div className="col-span-full py-20 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">
-                    Nenhum registro de consumo encontrado.
+                  <div className="col-span-full py-32 text-center">
+                    <p className="text-brand-wine/20 text-4xl mb-4">🍷</p>
+                    <p className="text-text-muted font-bold uppercase tracking-[0.2em] text-[10px]">
+                      Nenhum registro de consumo encontrado.
+                    </p>
                   </div>
                 )}
               </div>
@@ -546,56 +551,61 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {/* Bottom Bar for iPhone Optimization */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-black/5 px-6 pt-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex items-center justify-between z-40 shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
-        <button 
+      {/* iPhone Balanced Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/85 backdrop-blur-2xl border-t border-black/5 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] px-6 flex items-center justify-between z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.04)]">
+        <TabButton 
+          active={view === 'cellar'} 
           onClick={() => setView('cellar')} 
-          className={`flex flex-col items-center gap-1 transition-all ${view === 'cellar' ? 'text-brand-wine' : 'text-text-muted'}`}
-        >
-          <LayoutGrid size={20} strokeWidth={view === 'cellar' ? 2.5 : 2} />
-          <span className="text-[9px] font-bold uppercase tracking-tighter">Adega</span>
-        </button>
+          icon={<LayoutGrid size={22} />} 
+          label="Adega" 
+        />
 
-        <button 
+        <TabButton 
+          active={activeModal === 'stats'} 
           onClick={() => setActiveModal('stats')} 
-          className={`flex flex-col items-center gap-1 transition-all ${activeModal === 'stats' ? 'text-brand-wine' : 'text-text-muted'}`}
-        >
-          <BarChart3 size={20} strokeWidth={activeModal === 'stats' ? 2.5 : 2} />
-          <span className="text-[9px] font-bold uppercase tracking-tighter">Estatística</span>
-        </button>
+          icon={<BarChart3 size={22} />} 
+          label="Stats" 
+        />
         
-        <div className="flex items-center gap-4">
+        {/* Central Action Hub */}
+        <div className="flex items-center gap-3 px-4 py-1 bg-black/5 rounded-3xl border border-white/20">
           <button 
             onClick={() => setActiveModal('voice')} 
-            className="w-11 h-11 flex items-center justify-center bg-cream-dark text-text-main rounded-2xl active:scale-90 transition-all border border-black/5"
+            className="w-10 h-10 flex items-center justify-center text-text-main active:scale-90 transition-all hover:bg-white/50 rounded-full"
           >
-            <Mic size={20} />
+            <Mic size={18} />
           </button>
           
           {isAdmin && (
             <button 
               onClick={() => { setSelectedItem(null); setScannedData(null); setActiveModal('edit'); }}
-              className="w-12 h-12 flex items-center justify-center bg-brand-wine text-white rounded-2xl shadow-lg shadow-brand-wine/20 active:scale-90 transition-all border border-brand-wine/20"
+              className="w-12 h-12 flex items-center justify-center bg-brand-wine text-white rounded-2xl shadow-xl shadow-brand-wine/20 active:scale-95 transition-all border border-white/10"
             >
-              <Plus size={24} strokeWidth={2.5} />
+              <Plus size={22} strokeWidth={2.5} />
             </button>
           )}
 
           <button 
             onClick={() => { setSelectedItem(null); setScannedData(null); setActiveModal('scan'); }}
-            className="w-11 h-11 flex items-center justify-center bg-cream-dark text-text-main rounded-2xl active:scale-90 transition-all border border-black/5"
+            className="w-10 h-10 flex items-center justify-center text-text-main active:scale-90 transition-all hover:bg-white/50 rounded-full"
           >
-            <Camera size={20} />
+            <Camera size={18} />
           </button>
         </div>
 
-        <button 
+        <TabButton 
+          active={view === 'history'} 
           onClick={() => setView('history')} 
-          className={`flex flex-col items-center gap-1 transition-all ${view === 'history' ? 'text-brand-wine' : 'text-text-muted'}`}
-        >
-          <History size={20} strokeWidth={view === 'history' ? 2.5 : 2} />
-          <span className="text-[9px] font-bold uppercase tracking-tighter">Histórico</span>
-        </button>
+          icon={<History size={22} />} 
+          label="Histórico" 
+        />
+
+        <TabButton 
+          active={false}
+          onClick={() => setMode(mode === 'wines' ? 'spirits' : 'wines')}
+          icon={mode === 'wines' ? <span>🥃</span> : <span>🍷</span>}
+          label={mode === 'wines' ? 'Spirits' : 'Vinhos'}
+        />
       </nav>
 
       {/* Modals */}
@@ -898,64 +908,61 @@ function LoginScreen({ onAdminLogin, onGuestLogin }: { onAdminLogin: (token: str
 
 function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, onLogout, onInout, onReports }: any) {
   return (
-    <header className="sticky top-0 z-50 bg-cream/96 backdrop-blur-md border-b border-black/5 h-auto py-2 flex items-center">
-      <div className="max-w-[1300px] mx-auto w-full px-4 flex flex-wrap items-center justify-between gap-y-2">
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="flex items-center gap-0.5 bg-cream-dark p-1 rounded-lg">
-            <button 
-              onClick={() => setMode('wines')}
-              className={`w-8 h-7 rounded-md transition-all text-base flex items-center justify-center ${mode === 'wines' ? 'bg-brand-wine text-white shadow-sm' : 'text-text-muted opacity-40 hover:opacity-100'}`}
-            >
-              🍷
-            </button>
-            <button 
-              onClick={() => setMode('spirits')}
-              className={`w-8 h-7 rounded-md transition-all text-base flex items-center justify-center ${mode === 'spirits' ? 'bg-[#8B4513] text-white shadow-sm' : 'text-text-muted opacity-40 hover:opacity-100'}`}
-            >
-              🥃
-            </button>
-          </div>
-          
-          <div className="flex flex-col relative">
-            <button 
-              onClick={onRefresh}
-              className="flex items-center gap-1.5 focus:outline-none group relative pl-0.5"
-            >
-              <div className="absolute -left-1.5 -top-1 w-10 h-10 flex items-center justify-center pointer-events-none">
-                <RefreshCw 
-                  size={28} 
-                  className={`text-brand-wine transition-all ${syncStatus === 'saving' ? 'animate-spin opacity-30' : 'opacity-0'}`} 
-                />
-              </div>
-              <h1 className="italic text-[17px] sm:text-[19px] text-text-main font-serif leading-none tracking-tight relative z-10">Adega</h1>
+    <header className="sticky top-0 z-50 bg-cream/80 backdrop-blur-xl border-b border-black/5 pt-[env(safe-area-inset-top)] mb-[-env(safe-area-inset-top)]">
+      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={onRefresh}
+            className="group flex flex-col"
+          >
+            <div className="flex items-center gap-2">
+              <h1 className="italic text-xl sm:text-2xl text-text-main font-serif tracking-tight">Adega</h1>
               {isAdmin && (
-                <span className="text-[7px] bg-[#2c1810] text-[#f0e8d0] px-1 py-0.5 rounded font-bold uppercase tracking-widest leading-none hidden xs:inline-block relative z-10">Admin</span>
+                <span className="text-[7px] bg-brand-wine text-cream px-1.5 py-0.5 rounded-full font-bold uppercase tracking-widest leading-none">Admin</span>
               )}
-            </button>
-            <div className={`flex items-center gap-1 text-[9px] font-medium font-sans mt-0.5 ${syncStatus === 'saving' ? 'text-brand-gold' : syncStatus === 'error' ? 'text-red-800' : 'text-emerald-600'}`}>
-              <div className={`w-1 h-1 rounded-full ${syncStatus === 'saving' ? 'animate-pulse bg-brand-gold' : 'bg-current'}`} />
-              <span className="opacity-70">{syncStatus === 'saving' ? 'Sync…' : 'Sync'}</span>
             </div>
-          </div>
+            <div className={`flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest transition-all ${syncStatus === 'saving' ? 'text-brand-gold' : syncStatus === 'error' ? 'text-red-700' : 'text-emerald-600'}`}>
+              <div className={`w-1 h-1 rounded-full ${syncStatus === 'saving' ? 'animate-pulse bg-brand-gold' : 'bg-current'}`} />
+              <span>{syncStatus === 'saving' ? 'Sincronizando…' : 'Online'}</span>
+            </div>
+          </button>
         </div>
 
-        <nav className="flex items-center gap-0.5 sm:gap-1">
-          <button onClick={onReports} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Relatório de Análise">
-            <BarChart3 size={16} />
+        <div className="flex items-center gap-1">
+          <button onClick={onReports} className="w-10 h-10 flex items-center justify-center text-text-muted hover:bg-black/5 rounded-full transition-colors">
+            <BarChart3 size={18} />
           </button>
           
           {isAdmin && (
-            <button onClick={onInout} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Gestão da Base de Dados">
-              <Database size={16} />
+            <button onClick={onInout} className="w-10 h-10 flex items-center justify-center text-text-muted hover:bg-black/5 rounded-full transition-colors">
+              <Database size={18} />
             </button>
           )}
 
-          <button onClick={onLogout} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Sair">
-             <LogOut size={16} />
+          <div className="w-[1px] h-4 bg-black/5 mx-1" />
+
+          <button onClick={onLogout} className="w-10 h-10 flex items-center justify-center text-text-muted hover:text-brand-wine transition-colors">
+             <LogOut size={18} />
           </button>
-        </nav>
+        </div>
       </div>
     </header>
+  );
+}
+
+function TabButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
+  return (
+    <button 
+      onClick={onClick} 
+      className={`flex flex-col items-center gap-1 transition-all active:scale-95 ${active ? 'text-brand-wine' : 'text-text-muted'}`}
+    >
+      <div className={`transition-all duration-300 ${active ? 'scale-110' : ''}`}>
+        {icon}
+      </div>
+      <span className={`text-[8px] font-bold uppercase tracking-widest text-center ${active ? 'opacity-100' : 'opacity-60'}`}>
+        {label}
+      </span>
+    </button>
   );
 }
 
@@ -972,7 +979,6 @@ function HeaderBtn({ icon, label, onClick, className }: any) {
 }
 
 function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }: any) {
-  // Sort adegas by specific order: Membeca, Rio, SP
   const order = ['Membeca', 'Rio', 'SP'];
   const sortedAdegas = [...adegas].sort((a, b) => {
     const idxA = order.indexOf(a.name);
@@ -983,10 +989,10 @@ function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }
     return a.name.localeCompare(b.name);
   });
 
-  const allAdegas = [...sortedAdegas, { id: 'all', name: 'Todas', emoji: '🏢' }];
+  const allAdegas = [{ id: 'all', name: 'Todas', emoji: '🏢' }, ...sortedAdegas];
   
   return (
-    <div className="flex flex-nowrap gap-2 pb-1 md:flex-wrap md:gap-4 md:mx-0 md:px-0">
+    <div className="flex flex-nowrap gap-3 pb-1 md:flex-wrap md:gap-4 scroll-smooth">
       {allAdegas.map((a) => {
         const count = mode === 'wines' 
           ? (a.id === 'all' ? wines.reduce((acc: any, w: any) => acc + w.qty, 0) : wines.filter((w: any) => w.adegaId === a.id).reduce((acc: any, w: any) => acc + w.qty, 0))
@@ -996,15 +1002,15 @@ function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }
           <button
             key={a.id}
             onClick={() => onChange(a.id)}
-            className={`flex items-center gap-2.5 py-1 px-3 sm:px-4 rounded-[12px] border transition-all duration-200 whitespace-nowrap shadow-sm font-sans text-[13px] sm:text-[14px] ${
+            className={`flex items-center gap-2 py-2 px-4 rounded-2xl border transition-all duration-300 whitespace-nowrap font-sans text-sm active:scale-95 ${
               activeId === a.id 
-                ? 'bg-brand-wine text-white border-brand-wine shadow-md ring-2 ring-brand-wine/10' 
-                : 'bg-white text-text-sub border-black/5 hover:border-black/10'
+                ? 'bg-brand-wine text-white border-brand-wine shadow-lg shadow-brand-wine/10' 
+                : 'bg-white text-text-sub border-black/5 hover:bg-cream-dark'
             }`}
           >
-            <span className="text-[14px] sm:text-[16px]">{a.emoji}</span>
-            <span className="font-semibold">{a.name}</span>
-            <span className={`text-[10px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md transition-colors ml-1 ${activeId === a.id ? 'bg-white/20 text-white' : 'bg-cream-dark text-text-muted'}`}>
+            <span className="text-base">{a.emoji}</span>
+            <span className="font-bold tracking-tight">{a.name}</span>
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-1 ${activeId === a.id ? 'bg-white/20 text-white' : 'bg-black/5 text-text-muted'}`}>
               {count}
             </span>
           </button>
