@@ -23,7 +23,7 @@ export default defineConfig(({mode}) => {
           orientation: 'portrait',
           icons: [
             {
-              src: 'pwa-192x192.png',
+              src: 'apple-touch-icon.png',
               sizes: '192x192',
               type: 'image/png'
             },
