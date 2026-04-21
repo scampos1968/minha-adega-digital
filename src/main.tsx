@@ -4,8 +4,26 @@ import App from './App.tsx';
 import './index.css';
 import { registerSW } from 'virtual:pwa-register';
 
-// Register service worker
-registerSW({ immediate: true });
+// On every load, unregister stale service workers that don't have skipWaiting.
+// This ensures old cached versions never block a fresh deploy from loading.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    for (const reg of registrations) {
+      if (reg.waiting) {
+        // Old SW is waiting — force it to activate immediately.
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+    }
+  });
+}
+
+registerSW({
+  immediate: true,
+  onNeedRefresh() {
+    // New version available — reload to activate immediately.
+    window.location.reload();
+  },
+});
 
 // Emergency Clear via URL: adding ?clear=true to the URL will reset the app
 if (window.location.search.includes('clear=true')) {

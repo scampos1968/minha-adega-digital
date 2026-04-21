@@ -41,8 +41,21 @@ export default defineConfig(({mode}) => {
           ]
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          skipWaiting: true,
+          clientsClaim: true,
+          // Intentionally excludes html — index.html is always fetched from the
+          // network so users never get stuck on a stale cached version after deploy.
+          globPatterns: ['**/*.{js,css,ico,png,svg,woff2}'],
+          navigateFallback: null,
           runtimeCaching: [
+            {
+              urlPattern: ({ request }: { request: Request }) => request.mode === 'navigate',
+              handler: 'NetworkFirst' as const,
+              options: {
+                cacheName: 'pages-cache',
+                networkTimeoutSeconds: 5,
+              },
+            },
             {
               urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/v1\/object\/public\/.*/i,
               handler: 'CacheFirst',
