@@ -12,7 +12,7 @@ export default defineConfig(({mode}) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['apple-touch-icon.png', 'adega-icon.png', 'pwa-512x512.png'],
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'adega-icon.png', 'pwa-512x512.png'],
         manifest: {
           name: 'Adega Pessoal',
           short_name: 'Adega',
