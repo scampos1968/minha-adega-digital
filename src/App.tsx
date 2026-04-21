@@ -17,6 +17,7 @@ import { AnalysisModal } from './components/AnalysisModal';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [view, setView] = useState<'cellar' | 'history'>('cellar');
@@ -50,16 +51,17 @@ export default function App() {
       setTimeout(() => loader.remove(), 500);
     }
     
-    // Safety timeout: If still loading after 10 seconds, force show UI
+    // Safety timeout: If still loading after 5 seconds, force show UI
     const safetyTimer = setTimeout(() => {
       setLoading(prev => {
         if (prev) {
           console.warn('Loading taking too long, forcing UI state');
+          setLoadError('Tempo de conexão esgotado. Verifique sua internet e tente novamente.');
           return false;
         }
         return false;
       });
-    }, 10000);
+    }, 5000);
     
     // Auth error handling (JWT expired)
     const handleAuthError = () => {
@@ -130,9 +132,15 @@ export default function App() {
       });
       
       setSyncStatus('ok');
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       setSyncStatus('error');
+      const msg = e?.message || 'Erro ao conectar com o banco de dados.';
+      if (msg.includes('VITE_SUPABASE_URL') || msg.includes('ausente')) {
+        setLoadError('Configuração do banco de dados ausente. Verifique as variáveis de ambiente no Netlify.');
+      } else {
+        setLoadError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -405,21 +413,41 @@ export default function App() {
         <div className="w-16 h-16 border-4 border-[#2c1810]/20 border-t-[#2c1810] rounded-full animate-spin mb-6" />
         <h2 className="text-xl font-medium text-[#2c1810] mb-2 font-serif italic">Adega Pessoal</h2>
         <p className="text-[#5a2e14]/60 text-sm max-w-xs">Carregando sua coleção...</p>
-        
+
         <div className="mt-12 flex flex-col gap-4">
-          <button 
+          <button
             onClick={() => {
               localStorage.clear();
-              window.location.href = window.location.pathname; 
+              window.location.href = window.location.pathname;
             }}
             className="text-xs text-[#5a2e14]/40 hover:text-[#5a2e14] underline flex items-center justify-center gap-1.5"
           >
             <RefreshCw size={12} />
             Forçar Limpeza de Cache & Reset
           </button>
-          
+
           <p className="text-[10px] text-[#5a2e14]/20 italic">v1.2.1 - Aguardando conexão...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (loadError && !isAuthenticated) {
+    return (
+      <div className="fixed inset-0 bg-[#faf7f2] flex flex-col items-center justify-center p-8 text-center z-[10000]">
+        <AlertCircle size={40} className="text-red-500 mb-4" />
+        <h2 className="text-xl font-medium text-[#2c1810] mb-2 font-serif italic">Erro ao carregar</h2>
+        <p className="text-red-600/80 text-sm max-w-xs mb-6">{loadError}</p>
+        <button
+          onClick={() => {
+            localStorage.clear();
+            window.location.href = window.location.pathname;
+          }}
+          className="text-xs text-[#5a2e14]/60 hover:text-[#5a2e14] underline flex items-center justify-center gap-1.5"
+        >
+          <RefreshCw size={12} />
+          Limpar Cache & Tentar Novamente
+        </button>
       </div>
     );
   }
