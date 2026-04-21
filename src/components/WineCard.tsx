@@ -141,14 +141,14 @@ export function WineCard({ wine, adega, onDrink, onEdit, onDelete, onStock, onEx
         </div>
 
         {/* Actions - iPhone Pill Style */}
-        <div className={`p-4 pt-0 grid ${isAdmin ? 'grid-cols-5' : 'grid-cols-2'} gap-2`}>
+        <div className={`p-4 pt-0 grid ${isAdmin ? 'grid-cols-5' : 'grid-cols-2'} gap-1.5 sm:gap-2`}>
           {isAdmin ? (
             <>
-              <CircularAction icon={<Edit3 size={16} />} color="bg-cream-deep text-text-sub" onClick={() => onEdit?.(wine)} />
-              <CircularAction icon={<BookOpen size={16} />} color="bg-brand-wine/10 text-brand-wine" onClick={() => onExpert?.(wine)} />
-              <CircularAction icon={<GlassWater size={16} />} color="bg-brand-wine text-white" onClick={() => onDrink?.(wine)} className="col-span-1" />
-              <CircularAction icon={<Package size={16} />} color="bg-cream-deep text-text-sub" onClick={() => onStock?.(wine)} />
-              <CircularAction icon={<Trash2 size={16} />} color="bg-red-50 text-red-600" onClick={() => onDelete?.(wine)} />
+              <CircularAction icon={<Edit3 size={15} />} color="bg-cream-deep text-text-sub" onClick={() => onEdit?.(wine)} />
+              <CircularAction icon={<BookOpen size={15} />} color="bg-brand-wine/10 text-brand-wine" onClick={() => onExpert?.(wine)} />
+              <CircularAction icon={<GlassWater size={15} />} color="bg-brand-wine text-white" onClick={() => onDrink?.(wine)} />
+              <CircularAction icon={<Package size={15} />} color="bg-cream-deep text-text-sub" onClick={() => onStock?.(wine)} />
+              <CircularAction icon={<Trash2 size={15} />} color="bg-red-50 text-red-600" onClick={() => onDelete?.(wine)} />
             </>
           ) : (
             <>
@@ -204,7 +204,7 @@ function CircularAction({ icon, label, onClick, className = '', color = '', show
       onClick={onClick}
       className={`flex flex-col items-center justify-center gap-1.5 transition-all active:scale-90 ${showLabel ? 'flex-1' : ''} ${className}`}
     >
-      <div className={`w-11 h-11 flex items-center justify-center rounded-2xl shadow-sm ${color}`}>
+      <div className={`w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl sm:rounded-2xl shadow-sm ${color}`}>
         {icon}
       </div>
       {showLabel && (

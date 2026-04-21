@@ -17,7 +17,6 @@ import { AnalysisModal } from './components/AnalysisModal';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [view, setView] = useState<'cellar' | 'history'>('cellar');
@@ -51,17 +50,16 @@ export default function App() {
       setTimeout(() => loader.remove(), 500);
     }
     
-    // Safety timeout: If still loading after 5 seconds, force show UI
+    // Safety timeout: If still loading after 10 seconds, force show UI
     const safetyTimer = setTimeout(() => {
       setLoading(prev => {
         if (prev) {
           console.warn('Loading taking too long, forcing UI state');
-          setLoadError('Tempo de conexão esgotado. Verifique sua internet e tente novamente.');
           return false;
         }
         return false;
       });
-    }, 5000);
+    }, 10000);
     
     // Auth error handling (JWT expired)
     const handleAuthError = () => {
@@ -132,15 +130,9 @@ export default function App() {
       });
       
       setSyncStatus('ok');
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
       setSyncStatus('error');
-      const msg = e?.message || 'Erro ao conectar com o banco de dados.';
-      if (msg.includes('VITE_SUPABASE_URL') || msg.includes('ausente')) {
-        setLoadError('Configuração do banco de dados ausente. Verifique as variáveis de ambiente no Netlify.');
-      } else {
-        setLoadError(msg);
-      }
     } finally {
       setLoading(false);
     }
@@ -413,41 +405,19 @@ export default function App() {
         <div className="w-16 h-16 border-4 border-[#2c1810]/20 border-t-[#2c1810] rounded-full animate-spin mb-6" />
         <h2 className="text-xl font-medium text-[#2c1810] mb-2 font-serif italic">Adega Pessoal</h2>
         <p className="text-[#5a2e14]/60 text-sm max-w-xs">Carregando sua coleção...</p>
-
+        
         <div className="mt-12 flex flex-col gap-4">
-          <button
+          <button 
             onClick={() => {
               localStorage.clear();
-              window.location.href = window.location.pathname;
+              window.location.href = window.location.pathname; 
             }}
             className="text-xs text-[#5a2e14]/40 hover:text-[#5a2e14] underline flex items-center justify-center gap-1.5"
           >
             <RefreshCw size={12} />
             Forçar Limpeza de Cache & Reset
           </button>
-
-          <p className="text-[10px] text-[#5a2e14]/20 italic">v1.2.1 - Aguardando conexão...</p>
         </div>
-      </div>
-    );
-  }
-
-  if (loadError && !isAuthenticated) {
-    return (
-      <div className="fixed inset-0 bg-[#faf7f2] flex flex-col items-center justify-center p-8 text-center z-[10000]">
-        <AlertCircle size={40} className="text-red-500 mb-4" />
-        <h2 className="text-xl font-medium text-[#2c1810] mb-2 font-serif italic">Erro ao carregar</h2>
-        <p className="text-red-600/80 text-sm max-w-xs mb-6">{loadError}</p>
-        <button
-          onClick={() => {
-            localStorage.clear();
-            window.location.href = window.location.pathname;
-          }}
-          className="text-xs text-[#5a2e14]/60 hover:text-[#5a2e14] underline flex items-center justify-center gap-1.5"
-        >
-          <RefreshCw size={12} />
-          Limpar Cache & Tentar Novamente
-        </button>
       </div>
     );
   }
@@ -650,40 +620,40 @@ export default function App() {
       </main>
 
       {/* iPhone Premium Fixed Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/85 backdrop-blur-2xl border-t border-black/5 pb-[env(safe-area-inset-bottom)] px-6 shadow-[0_-10px_40px_rgba(0,0,0,0.04)]">
-        <div className="max-w-7xl mx-auto flex items-center justify-between py-3">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/85 backdrop-blur-2xl border-t border-black/5 pb-[env(safe-area-inset-bottom)] px-4 sm:px-6 shadow-[0_-10px_40px_rgba(0,0,0,0.04)]">
+        <div className="max-w-7xl mx-auto flex items-center justify-between py-1.5">
           <div className="flex flex-1 justify-around items-center">
             <TabButton 
               active={mode === 'wines' && view === 'cellar'} 
               onClick={() => { setMode('wines'); setView('cellar'); }} 
-              icon={<WineIcon size={24} />} 
+              icon={<WineIcon size={22} />} 
               label="Vinhos" 
             />
           </div>
 
-          <div className="flex items-center gap-2.5 px-3 py-1.5 bg-black/5 rounded-[28px] border border-white/40 shadow-inner mx-4">
+          <div className="flex items-center gap-1 sm:gap-2.5 px-2 py-1 bg-black/5 rounded-[28px] border border-white/40 shadow-inner mx-2 sm:mx-4">
             <button 
               onClick={() => setActiveModal('voice')} 
-              className="w-11 h-11 flex items-center justify-center text-text-main active:scale-90 transition-all hover:bg-white/50 rounded-full"
+              className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center text-text-main active:scale-90 transition-all hover:bg-white/50 rounded-full"
               title="Voz"
             >
-              <Mic size={20} />
+              <Mic size={18} />
             </button>
             
             <button 
               onClick={() => { setSelectedItem(null); setScannedData(null); setActiveModal('edit'); }}
-              className="w-14 h-14 flex items-center justify-center bg-brand-wine text-cream rounded-[22px] shadow-2xl shadow-brand-wine/30 active:scale-95 transition-all mb-1 border border-white/10"
+              className="w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center bg-brand-wine text-cream rounded-[18px] sm:rounded-[22px] shadow-xl sm:shadow-2xl shadow-brand-wine/30 active:scale-95 transition-all border border-white/10"
               title="Adicionar"
             >
-              <Plus size={28} strokeWidth={2.5} />
+              <Plus size={22} strokeWidth={2.5} />
             </button>
 
             <button 
               onClick={() => { setSelectedItem(null); setScannedData(null); setActiveModal('scan'); }}
-              className="w-11 h-11 flex items-center justify-center text-text-main active:scale-90 transition-all hover:bg-white/50 rounded-full"
+              className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center text-text-main active:scale-90 transition-all hover:bg-white/50 rounded-full"
               title="Escanear"
             >
-              <Camera size={20} />
+              <Camera size={18} />
             </button>
           </div>
 
@@ -1006,7 +976,7 @@ function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, 
             className="group flex flex-col"
           >
             <div className="flex items-center gap-2">
-              <h1 className="italic text-xl sm:text-2xl text-text-main font-serif tracking-tight">Adega <span className="text-[10px] opacity-20 not-italic">v1.2.1</span></h1>
+              <h1 className="italic text-xl sm:text-2xl text-text-main font-serif tracking-tight">Adega</h1>
               {isAdmin && (
                 <span className="text-[7px] bg-brand-wine text-cream px-1.5 py-0.5 rounded-full font-bold uppercase tracking-widest leading-none">Admin</span>
               )}
@@ -1099,7 +1069,7 @@ function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }
     return a.name.localeCompare(b.name);
   });
 
-  const allAdegas = [{ id: 'all', name: 'Todas', emoji: '🏢' }, ...sortedAdegas];
+  const allAdegas = [...sortedAdegas, { id: 'all', name: 'All', emoji: '🏢' }];
   
   return (
     <div className="flex flex-nowrap gap-3 pb-1 md:flex-wrap md:gap-4 scroll-smooth">
@@ -1112,14 +1082,20 @@ function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }
           <button
             key={a.id}
             onClick={() => onChange(a.id)}
-            className={`flex items-center gap-2 py-2.5 px-5 rounded-[22px] border transition-all duration-500 whitespace-nowrap font-sans text-sm active:scale-[0.96] ${
+            className={`flex items-center gap-2 py-2 px-4 sm:py-2.5 sm:px-5 rounded-[22px] border transition-all duration-500 whitespace-nowrap font-sans text-sm active:scale-[0.96] ${
               activeId === a.id 
                 ? 'bg-brand-wine text-white border-brand-wine shadow-[0_10px_25px_-5px_rgba(74,14,14,0.3)] ring-4 ring-brand-wine/5' 
                 : 'bg-white text-text-sub border-black/5 hover:bg-cream-dark'
             }`}
           >
-            <span className="text-base">{a.emoji}</span>
-            <span className="font-bold tracking-tight">{a.name}</span>
+            {a.id === 'all' ? (
+              <span className="font-bold tracking-tight">All</span>
+            ) : (
+              <>
+                <span className="text-base">{a.emoji}</span>
+                <span className="font-bold tracking-tight hidden sm:inline">{a.name}</span>
+              </>
+            )}
             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-1 min-w-[20px] text-center ${activeId === a.id ? 'bg-white/20 text-white' : 'bg-black/5 text-text-muted'}`}>
               {count}
             </span>
