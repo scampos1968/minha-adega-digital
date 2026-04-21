@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Wine, Spirit, Adega, Consumption, SpiritConsumption } from './types';
-import { sbGet, sbUpsert, sbPatch, sbDel, wineFromDB, spiritFromDB, consumptionFromDB, spiritConsumptionFromDB, consumptionToDB, spiritConsumptionToDB, sbLogin } from './lib/supabase';
-import { LogIn, User, Wine as WineIcon, History, RefreshCw, Plus, Mic, Package, Trash2, BookOpen, GlassWater, Settings, X, Search, LogOut, Database, Camera, Star, ArrowLeft, LayoutGrid, BarChart3, ChevronRight, ChevronDown } from 'lucide-react';
+import { sbGet, sbUpsert, sbPatch, sbDel, wineFromDB, spiritFromDB, consumptionFromDB, spiritConsumptionFromDB, consumptionToDB, spiritConsumptionToDB, sbLogin, wineToDB, spiritToDB } from './lib/supabase';
+import { LogIn, User, Wine as WineIcon, History, RefreshCw, Plus, Mic, Package, Trash2, BookOpen, GlassWater, Settings, X, Search, LogOut, Database, Camera, Star, ArrowLeft, LayoutGrid, BarChart3, ChevronRight, ChevronDown, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { InventoryGrid } from './components/InventoryGrid';
 import { generateExpertSummaryGemini } from './lib/ai';
@@ -14,7 +14,6 @@ import { StatsModal } from './components/StatsModal';
 import { ItemModal } from './components/ItemModal';
 import { ImportPhotosModal } from './components/ImportPhotosModal';
 import { AnalysisModal } from './components/AnalysisModal';
-import { wineToDB, spiritToDB } from './lib/supabase';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -40,8 +39,10 @@ export default function App() {
   const [scanQueue, setScanQueue] = useState<{ data: any, imageUrl: string }[]>([]);
 
   useEffect(() => {
-    checkSession();
-    
+    const sessionTimer = setTimeout(() => {
+      checkSession();
+    }, 100);
+
     // Hide initial HTML loader if it exists
     const loader = document.getElementById('initial-loader');
     if (loader) {
@@ -49,23 +50,48 @@ export default function App() {
       setTimeout(() => loader.remove(), 500);
     }
     
+    // Safety timeout: If still loading after 10 seconds, force show UI
+    const safetyTimer = setTimeout(() => {
+      setLoading(prev => {
+        if (prev) {
+          console.warn('Loading taking too long, forcing UI state');
+          return false;
+        }
+        return false;
+      });
+    }, 10000);
+    
     // Auth error handling (JWT expired)
     const handleAuthError = () => {
       handleLogout();
       alert('Sua sessão expirou. Por favor, faça login novamente.');
     };
     window.addEventListener('adega-auth-error', handleAuthError);
-    return () => window.removeEventListener('adega-auth-error', handleAuthError);
+    return () => {
+      clearTimeout(sessionTimer);
+      clearTimeout(safetyTimer);
+      window.removeEventListener('adega-auth-error', handleAuthError);
+    };
   }, []);
 
   async function checkSession() {
-    const sessionString = localStorage.getItem('adega_session');
-    if (sessionString) {
-      const session = JSON.parse(sessionString);
-      setIsAuthenticated(true);
-      setIsAdmin(!!session.isAdmin);
-      await boot();
-    } else {
+    try {
+      const sessionString = localStorage.getItem('adega_session');
+      if (sessionString) {
+        const session = JSON.parse(sessionString);
+        if (!session || !session.expiry || Date.now() > session.expiry) {
+          handleLogout();
+          return;
+        }
+        setIsAuthenticated(true);
+        setIsAdmin(!!session.isAdmin);
+        await boot();
+      } else {
+        setLoading(false);
+      }
+    } catch (e) {
+      console.error('Session check failed:', e);
+      handleLogout();
       setLoading(false);
     }
   }
@@ -364,7 +390,24 @@ export default function App() {
   }, [consumptions, spiritCons, mode]);
 
   if (loading) {
-    return <LoadingIndicator />;
+    return (
+      <div className="fixed inset-0 bg-[#faf7f2] flex flex-col items-center justify-center p-8 text-center z-[10000]">
+        <div className="w-16 h-16 border-4 border-[#2c1810]/20 border-t-[#2c1810] rounded-full animate-spin mb-6" />
+        <h2 className="text-xl font-medium text-[#2c1810] mb-2 font-serif italic">Adega Pessoal</h2>
+        <p className="text-[#5a2e14]/60 text-sm max-w-xs">Carregando sua coleção...</p>
+        
+        <button 
+          onClick={() => {
+            localStorage.removeItem('adega_session');
+            window.location.reload();
+          }}
+          className="mt-12 text-xs text-[#5a2e14]/40 hover:text-[#5a2e14] underline flex items-center gap-1.5"
+        >
+          <RefreshCw size={12} />
+          Se travar por muito tempo, clique aqui para resetar
+        </button>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
