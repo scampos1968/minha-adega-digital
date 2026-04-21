@@ -5,42 +5,42 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Playfair Display", serif;
   
-  --color-brand-wine: #5a1212;
-  --color-brand-gold: #c5a059;
-  --color-cream: #faf7f2;
-  --color-cream-dark: #f2ede4;
-  --color-cream-deep: #e8e1d5;
-  --color-parchment: #d9cfbf;
-  --color-text-main: #2c1810;
-  --color-text-sub: #5c4d46;
-  --color-text-muted: #8a7e78;
+  --color-brand-wine: #4A0E0E;
+  --color-brand-gold: #B8860B;
+  --color-cream: #FDFBFA;
+  --color-cream-dark: #F5F1EA;
+  --color-cream-deep: #EBE4D8;
+  --color-parchment: #D4C9BC;
+  --color-text-main: #1C120D;
+  --color-text-sub: #4A403A;
+  --color-text-muted: #8F847E;
   
-  --shadow-old: 0 4px 20px -4px rgba(44, 24, 16, 0.08), 0 2px 8px -2px rgba(44, 24, 16, 0.04);
-  --shadow-old-lg: 0 20px 40px -12px rgba(44, 24, 16, 0.12);
+  --shadow-old: 0 4px 24px -4px rgba(28, 18, 13, 0.06), 0 2px 12px -2px rgba(28, 18, 13, 0.03);
+  --shadow-old-lg: 0 30px 60px -12px rgba(28, 18, 13, 0.1);
 }
 
 @layer base {
   :root {
-    --sat: env(safe-area-inset-top);
-    --sar: env(safe-area-inset-right);
-    --sab: env(safe-area-inset-bottom);
-    --sal: env(safe-area-inset-left);
+    --sat: env(safe-area-inset-top, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
   }
 
   html {
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
     background-color: var(--color-cream);
+    height: 100%;
   }
 
   body {
     @apply text-text-main bg-cream antialiased font-sans transition-colors duration-300;
-    padding-top: var(--sat);
-    padding-bottom: var(--sab);
+    min-height: 100%;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-serif;
+    @apply font-serif font-medium;
   }
 }
 
@@ -60,15 +60,19 @@
   .mb-safe { margin-bottom: var(--sab); }
 
   .glass-header {
-    @apply sticky top-0 z-50 bg-cream/80 backdrop-blur-xl border-b border-black/5;
+    @apply sticky top-0 z-50 bg-white/70 backdrop-blur-2xl border-b border-black/5;
   }
 
   .glass-nav {
-    @apply fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-2xl border-t border-black/5 pb-[env(safe-area-inset-bottom)];
+    @apply fixed bottom-0 left-0 right-0 z-50 bg-white/70 backdrop-blur-2xl border-t border-black/5 pb-[env(safe-area-inset-bottom)];
+  }
+
+  .premium-card {
+    @apply bg-white border border-black/5 shadow-old rounded-[32px] transition-all active:scale-[0.98];
   }
 }
 
 /* Base Utility */
 .glass {
-  @apply bg-white/94 backdrop-blur-lg border-b border-black/10;
+  @apply bg-white/80 backdrop-blur-xl border-b border-black/5;
 }

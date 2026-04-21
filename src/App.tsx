@@ -348,6 +348,14 @@ export default function App() {
   }
 
   // Combine and sort history
+  // Current navigation state
+  const [activeTab, setActiveTab] = useState<'wines' | 'spirits'>(mode);
+  
+  // Sync tab with mode
+  useEffect(() => {
+    setActiveTab(mode);
+  }, [mode]);
+
   const historyList = useMemo(() => {
     const list = mode === 'wines' 
       ? consumptions.map(c => ({ ...c, isSpirit: false }))
@@ -473,6 +481,8 @@ export default function App() {
         onLogout={handleLogout}
         onInout={() => setActiveModal('inout')}
         onReports={() => setActiveModal('reports')}
+        onStats={() => setActiveModal('stats')}
+        onHistory={() => setView(view === 'cellar' ? 'history' : 'cellar')}
       />
       
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 pt-4 pb-32 md:px-8">
@@ -480,13 +490,13 @@ export default function App() {
           {view === 'cellar' ? (
             <motion.div 
               key="cellar"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.02 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
               className="space-y-4"
             >
-              <div className="sticky top-[64px] z-40 -mx-4 px-4 bg-cream/80 backdrop-blur-md py-2 overflow-x-auto no-scrollbar border-b border-black/5">
+              <div className="sticky top-[64px] z-40 -mx-4 px-4 bg-cream/80 backdrop-blur-md py-2.5 overflow-x-auto no-scrollbar border-b border-black/5">
                 <AdegaTabs 
                   adegas={adegas} 
                   activeId={activeAdega} 
@@ -499,9 +509,9 @@ export default function App() {
               </div>
 
               {adegas.length === 0 && syncStatus === 'ok' && (
-                <div className="p-6 bg-white border border-black/5 rounded-3xl text-text-muted text-xs font-medium flex flex-col items-center gap-3 text-center">
-                  <div className="w-12 h-12 bg-cream-dark rounded-full flex items-center justify-center text-xl">📦</div>
-                  <span>Sincronizado, mas nenhuma adega foi encontrada.</span>
+                <div className="p-8 bg-white border border-black/5 rounded-[32px] text-text-muted text-[13px] font-bold flex flex-col items-center gap-4 text-center shadow-sm">
+                  <div className="w-14 h-14 bg-cream-dark rounded-full flex items-center justify-center text-2xl">📦</div>
+                  <span className="tracking-tight">Sincronizado, mas nenhuma adega foi encontrada.</span>
                 </div>
               )}
 
@@ -518,12 +528,15 @@ export default function App() {
           ) : (
             <motion.div 
               key="history"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.02 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="space-y-4"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+              className="space-y-6"
             >
+              <div className="flex items-center justify-between px-2 pt-2">
+                <h2 className="font-serif italic text-2xl text-text-main">Histórico de Consumo</h2>
+              </div>
               <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
                 {historyList.length > 0 ? (
                   historyList.map((cons: any) => {
@@ -538,10 +551,10 @@ export default function App() {
                     );
                   })
                 ) : (
-                  <div className="col-span-full py-32 text-center">
-                    <p className="text-brand-wine/20 text-4xl mb-4">🍷</p>
-                    <p className="text-text-muted font-bold uppercase tracking-[0.2em] text-[10px]">
-                      Nenhum registro de consumo encontrado.
+                  <div className="col-span-full py-32 text-center bg-white rounded-[32px] border border-black/5">
+                    <p className="text-brand-wine/10 text-6xl mb-6">🥂</p>
+                    <p className="text-text-muted font-bold uppercase tracking-[0.2em] text-[11px]">
+                      Nenhum registro encontrado.
                     </p>
                   </div>
                 )}
@@ -551,61 +564,53 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {/* iPhone Balanced Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/85 backdrop-blur-2xl border-t border-black/5 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] px-6 flex items-center justify-between z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.04)]">
-        <TabButton 
-          active={view === 'cellar'} 
-          onClick={() => setView('cellar')} 
-          icon={<LayoutGrid size={22} />} 
-          label="Adega" 
-        />
+      {/* iPhone Premium Fixed Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/85 backdrop-blur-2xl border-t border-black/5 pb-[env(safe-area-inset-bottom)] px-6 shadow-[0_-10px_40px_rgba(0,0,0,0.04)]">
+        <div className="max-w-7xl mx-auto flex items-center justify-between py-3">
+          <div className="flex flex-1 justify-around items-center">
+            <TabButton 
+              active={mode === 'wines' && view === 'cellar'} 
+              onClick={() => { setMode('wines'); setView('cellar'); }} 
+              icon={<WineIcon size={24} />} 
+              label="Vinhos" 
+            />
+          </div>
 
-        <TabButton 
-          active={activeModal === 'stats'} 
-          onClick={() => setActiveModal('stats')} 
-          icon={<BarChart3 size={22} />} 
-          label="Stats" 
-        />
-        
-        {/* Central Action Hub */}
-        <div className="flex items-center gap-3 px-4 py-1 bg-black/5 rounded-3xl border border-white/20">
-          <button 
-            onClick={() => setActiveModal('voice')} 
-            className="w-10 h-10 flex items-center justify-center text-text-main active:scale-90 transition-all hover:bg-white/50 rounded-full"
-          >
-            <Mic size={18} />
-          </button>
-          
-          {isAdmin && (
+          <div className="flex items-center gap-2.5 px-3 py-1.5 bg-black/5 rounded-[28px] border border-white/40 shadow-inner mx-4">
+            <button 
+              onClick={() => setActiveModal('voice')} 
+              className="w-11 h-11 flex items-center justify-center text-text-main active:scale-90 transition-all hover:bg-white/50 rounded-full"
+              title="Voz"
+            >
+              <Mic size={20} />
+            </button>
+            
             <button 
               onClick={() => { setSelectedItem(null); setScannedData(null); setActiveModal('edit'); }}
-              className="w-12 h-12 flex items-center justify-center bg-brand-wine text-white rounded-2xl shadow-xl shadow-brand-wine/20 active:scale-95 transition-all border border-white/10"
+              className="w-14 h-14 flex items-center justify-center bg-brand-wine text-cream rounded-[22px] shadow-2xl shadow-brand-wine/30 active:scale-95 transition-all mb-1 border border-white/10"
+              title="Adicionar"
             >
-              <Plus size={22} strokeWidth={2.5} />
+              <Plus size={28} strokeWidth={2.5} />
             </button>
-          )}
 
-          <button 
-            onClick={() => { setSelectedItem(null); setScannedData(null); setActiveModal('scan'); }}
-            className="w-10 h-10 flex items-center justify-center text-text-main active:scale-90 transition-all hover:bg-white/50 rounded-full"
-          >
-            <Camera size={18} />
-          </button>
+            <button 
+              onClick={() => { setSelectedItem(null); setScannedData(null); setActiveModal('scan'); }}
+              className="w-11 h-11 flex items-center justify-center text-text-main active:scale-90 transition-all hover:bg-white/50 rounded-full"
+              title="Escanear"
+            >
+              <Camera size={20} />
+            </button>
+          </div>
+
+          <div className="flex flex-1 justify-around items-center">
+            <TabButton 
+              active={mode === 'spirits' && view === 'cellar'} 
+              onClick={() => { setMode('spirits'); setView('cellar'); }} 
+              icon={<GlassWater size={24} />} 
+              label="Spirits" 
+            />
+          </div>
         </div>
-
-        <TabButton 
-          active={view === 'history'} 
-          onClick={() => setView('history')} 
-          icon={<History size={22} />} 
-          label="Histórico" 
-        />
-
-        <TabButton 
-          active={false}
-          onClick={() => setMode(mode === 'wines' ? 'spirits' : 'wines')}
-          icon={mode === 'wines' ? <span>🥃</span> : <span>🍷</span>}
-          label={mode === 'wines' ? 'Spirits' : 'Vinhos'}
-        />
       </nav>
 
       {/* Modals */}
@@ -811,90 +816,90 @@ function LoginScreen({ onAdminLogin, onGuestLogin }: { onAdminLogin: (token: str
   }
 
   return (
-    <div className="min-h-screen bg-cream-dark flex flex-col items-center justify-center p-8 font-sans overflow-hidden">
+    <div className="min-h-screen bg-cream/30 flex flex-col items-center justify-center p-8 font-sans overflow-hidden">
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
         className="text-center mb-10"
       >
-        <h1 className="text-[36px] italic text-[#2c1810] mb-1 tracking-tight font-serif">Adega</h1>
-        <div className="text-[11px] text-[#8a6040] uppercase tracking-[3px] font-bold">Coleção Pessoal</div>
+        <h1 className="text-[42px] italic text-text-main mb-1 tracking-tighter font-serif">Adega</h1>
+        <div className="text-[10px] text-brand-gold uppercase tracking-[0.3em] font-bold">Coleção Pessoal</div>
       </motion.div>
 
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-cream border border-parchment/50 rounded-[20px] p-10 w-full max-w-sm shadow-old space-y-8"
+        className="bg-white border border-black/5 rounded-[32px] p-8 sm:p-10 w-full max-w-sm shadow-old space-y-8"
       >
         {!showAdminForm ? (
           <div className="space-y-4">
              <button 
               onClick={() => setShowAdminForm(true)}
-              className="w-full py-4 px-6 bg-[#5a2e14] text-[#f0e8d0] rounded-xl font-serif text-[17px] flex items-center justify-center gap-3 transition-all active:scale-[0.98] relative"
+              className="w-full py-4 px-6 bg-brand-wine text-cream rounded-2xl font-serif text-[18px] flex items-center justify-center gap-3 transition-all active:scale-[0.98] relative shadow-lg shadow-brand-wine/10"
             >
-              <LogIn size={16} className="absolute left-6" />
+              <LogIn size={18} className="absolute left-6" />
               <span>Admin</span>
             </button>
 
-            <div className="flex items-center gap-4 py-2 text-text-muted text-[11px] font-bold uppercase tracking-[2px]">
-              <div className="flex-1 h-[0.5px] bg-parchment" />
+            <div className="flex items-center gap-4 py-2 text-text-muted text-[10px] font-bold uppercase tracking-[2px]">
+              <div className="flex-1 h-[1px] bg-black/5" />
               <span>ou</span>
-              <div className="flex-1 h-[0.5px] bg-parchment" />
+              <div className="flex-1 h-[1px] bg-black/5" />
             </div>
 
             <button 
               onClick={onGuestLogin}
-              className="w-full py-4 px-6 bg-white border border-parchment text-text-main rounded-xl font-serif text-[17px] flex items-center justify-center gap-3 transition-all active:scale-[0.98] relative"
+              className="w-full py-4 px-6 bg-cream-dark/50 border border-black/5 text-text-main rounded-2xl font-serif text-[18px] flex items-center justify-center gap-3 transition-all active:scale-[0.98] relative"
             >
-              <User size={16} className="absolute left-6" />
-              <span>Guest</span>
+              <User size={18} className="absolute left-6" />
+              <span>Convidado</span>
             </button>
           </div>
         ) : (
           <form onSubmit={handleAdminSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-[#8a6040] uppercase tracking-wider ml-1">E-mail</label>
+              <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider ml-1">E-mail</label>
               <input 
                 autoFocus
                 type="email" 
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-white border border-parchment rounded-lg text-base sm:text-sm focus:outline-none focus:border-brand-wine transition-all"
+                className="w-full px-4 py-3 bg-cream-dark/30 border border-black/5 rounded-xl text-[16px] sm:text-sm focus:outline-none focus:border-brand-wine/20 transition-all font-bold"
                 placeholder="seu@email.com"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-[#8a6040] uppercase tracking-wider ml-1">Senha</label>
+              <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider ml-1">Senha</label>
               <input 
                 type="password" 
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-white border border-parchment rounded-lg text-base sm:text-sm focus:outline-none focus:border-brand-wine transition-all"
+                className="w-full px-4 py-3 bg-cream-dark/30 border border-black/5 rounded-xl text-[16px] sm:text-sm focus:outline-none focus:border-brand-wine/20 transition-all font-bold"
                 placeholder="••••••••"
               />
             </div>
 
             {error && (
-              <div className="p-4 bg-red-50 border border-red-100 text-red-600 text-xs rounded-lg font-bold text-center">
+              <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-[11px] rounded-xl font-bold text-center">
                 {error}
               </div>
             )}
 
-            <div className="pt-2 space-y-3">
+            <div className="pt-2 space-y-4">
               <button 
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 px-6 bg-brand-wine text-[#f0e8d0] rounded-xl font-serif text-[16px] flex items-center justify-center gap-3 transition-all disabled:opacity-50"
+                className="w-full py-4 px-6 bg-brand-wine text-cream rounded-2xl font-serif text-[18px] flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-lg shadow-brand-wine/20 disabled:opacity-50"
               >
-                {loading ? <RefreshCw size={18} className="animate-spin" /> : 'Entrar'}
+                {loading ? <RefreshCw size={20} className="animate-spin" /> : 'Entrar'}
               </button>
               <button 
                 type="button"
                 onClick={() => setShowAdminForm(false)}
-                className="w-full py-3 text-text-sub text-[11px] font-bold uppercase tracking-widest hover:text-text-main transition-colors"
+                className="w-full py-2 text-text-muted text-[10px] font-bold uppercase tracking-widest hover:text-text-main transition-colors"
               >
                 ← Voltar
               </button>
@@ -906,7 +911,7 @@ function LoginScreen({ onAdminLogin, onGuestLogin }: { onAdminLogin: (token: str
   );
 }
 
-function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, onLogout, onInout, onReports }: any) {
+function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, onLogout, onInout, onReports, onStats, onHistory }: any) {
   return (
     <header className="sticky top-0 z-50 bg-cream/80 backdrop-blur-xl border-b border-black/5 pt-[env(safe-area-inset-top)] mb-[-env(safe-area-inset-top)]">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -916,7 +921,7 @@ function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, 
             className="group flex flex-col"
           >
             <div className="flex items-center gap-2">
-              <h1 className="italic text-xl sm:text-2xl text-text-main font-serif tracking-tight">Adega</h1>
+              <h1 className="italic text-xl sm:text-2xl text-text-main font-serif tracking-tight">Adega <span className="text-[10px] opacity-20 not-italic">v1.1</span></h1>
               {isAdmin && (
                 <span className="text-[7px] bg-brand-wine text-cream px-1.5 py-0.5 rounded-full font-bold uppercase tracking-widest leading-none">Admin</span>
               )}
@@ -928,20 +933,40 @@ function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, 
           </button>
         </div>
 
-        <div className="flex items-center gap-1">
-          <button onClick={onReports} className="w-10 h-10 flex items-center justify-center text-text-muted hover:bg-black/5 rounded-full transition-colors">
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={onHistory}
+            className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${view === 'history' ? 'bg-brand-wine text-white shadow-lg' : 'text-text-muted hover:bg-black/5'}`}
+            title={view === 'cellar' ? 'Ver Histórico' : 'Voltar para Adega'}
+          >
+            {view === 'cellar' ? <History size={18} /> : <LayoutGrid size={18} />}
+          </button>
+
+          <button 
+            onClick={onStats} 
+            className="w-10 h-10 flex items-center justify-center text-text-muted hover:bg-black/5 rounded-full transition-colors"
+            title="Estatísticas"
+          >
             <BarChart3 size={18} />
           </button>
           
           {isAdmin && (
-            <button onClick={onInout} className="w-10 h-10 flex items-center justify-center text-text-muted hover:bg-black/5 rounded-full transition-colors">
+            <button 
+              onClick={onInout} 
+              className="w-10 h-10 flex items-center justify-center text-text-muted hover:bg-black/5 rounded-full transition-colors"
+              title="Dados brutos"
+            >
               <Database size={18} />
             </button>
           )}
 
           <div className="w-[1px] h-4 bg-black/5 mx-1" />
 
-          <button onClick={onLogout} className="w-10 h-10 flex items-center justify-center text-text-muted hover:text-brand-wine transition-colors">
+          <button 
+            onClick={onLogout} 
+            className="w-10 h-10 flex items-center justify-center text-text-muted hover:text-brand-wine transition-colors"
+            title="Sair"
+          >
              <LogOut size={18} />
           </button>
         </div>
@@ -954,12 +979,12 @@ function TabButton({ active, onClick, icon, label }: { active: boolean, onClick:
   return (
     <button 
       onClick={onClick} 
-      className={`flex flex-col items-center gap-1 transition-all active:scale-95 ${active ? 'text-brand-wine' : 'text-text-muted'}`}
+      className={`flex flex-col items-center gap-1.5 transition-all active:scale-95 px-4 ${active ? 'text-brand-wine' : 'text-text-muted opacity-60 hover:opacity-100'}`}
     >
       <div className={`transition-all duration-300 ${active ? 'scale-110' : ''}`}>
         {icon}
       </div>
-      <span className={`text-[8px] font-bold uppercase tracking-widest text-center ${active ? 'opacity-100' : 'opacity-60'}`}>
+      <span className={`text-[10px] font-bold uppercase tracking-widest text-center ${active ? 'opacity-100' : 'opacity-0 scale-90 translate-y-1'}`}>
         {label}
       </span>
     </button>
@@ -1002,15 +1027,15 @@ function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }
           <button
             key={a.id}
             onClick={() => onChange(a.id)}
-            className={`flex items-center gap-2 py-2 px-4 rounded-2xl border transition-all duration-300 whitespace-nowrap font-sans text-sm active:scale-95 ${
+            className={`flex items-center gap-2 py-2.5 px-5 rounded-[22px] border transition-all duration-500 whitespace-nowrap font-sans text-sm active:scale-[0.96] ${
               activeId === a.id 
-                ? 'bg-brand-wine text-white border-brand-wine shadow-lg shadow-brand-wine/10' 
+                ? 'bg-brand-wine text-white border-brand-wine shadow-[0_10px_25px_-5px_rgba(74,14,14,0.3)] ring-4 ring-brand-wine/5' 
                 : 'bg-white text-text-sub border-black/5 hover:bg-cream-dark'
             }`}
           >
             <span className="text-base">{a.emoji}</span>
             <span className="font-bold tracking-tight">{a.name}</span>
-            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-1 ${activeId === a.id ? 'bg-white/20 text-white' : 'bg-black/5 text-text-muted'}`}>
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-1 min-w-[20px] text-center ${activeId === a.id ? 'bg-white/20 text-white' : 'bg-black/5 text-text-muted'}`}>
               {count}
             </span>
           </button>

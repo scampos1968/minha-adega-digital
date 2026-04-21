@@ -82,13 +82,12 @@ export function SpiritCard({ spirit, adega, onDrink, onEdit, onDelete, onStock, 
           </div>
         </div>
 
-        <div className="p-5 pt-0 pb-4 flex-1 flex flex-col gap-0.5 min-h-[120px] bg-white relative z-20 -mt-4 rounded-t-[24px]">
-          <div className="h-1.5 w-10 bg-black/5 rounded-full mx-auto my-3" />
+        <div className="p-5 pt-4 pb-4 flex-1 flex flex-col gap-0.5 min-h-[120px] bg-white relative z-20">
           <h3 className="font-serif italic text-text-main text-[17px] leading-tight min-h-[2.8rem] flex items-center pr-2">
             {spirit.name}
           </h3>
           {spirit.producer && (
-            <p className="text-[13px] font-medium text-text-sub truncate opacity-80">{spirit.producer}</p>
+            <p className="text-[13px] font-bold text-text-sub truncate opacity-70">{spirit.producer}</p>
           )}
           {(spirit.country || spirit.aging) && (
             <p className="text-[12px] text-text-muted flex items-center gap-1.5 mt-1">
@@ -98,12 +97,12 @@ export function SpiritCard({ spirit, adega, onDrink, onEdit, onDelete, onStock, 
           )}
           
           <div className="mt-auto pt-4 flex items-center justify-between border-t border-black/5">
-            <div className="flex items-center gap-1.5 text-[13px] text-text-main font-bold">
-               <Package size={14} className={spirit.isOpen ? 'text-emerald-700' : 'text-brand-wine'} />
+            <div className="flex items-center gap-1.5 text-[12px] text-text-main font-bold uppercase tracking-wider">
+               <Package size={14} className={spirit.isOpen ? 'text-emerald-700' : 'text-brand-wine/40'} />
                <span>{spirit.isOpen ? 'ABERTA' : `${spirit.qty} un.`}</span>
             </div>
             {adega && (
-              <div className="flex items-center gap-1.5 py-1 px-2.5 bg-cream-dark rounded-xl text-[11px] text-text-sub font-bold">
+              <div className="flex items-center gap-1.5 text-[11px] text-text-sub font-bold uppercase tracking-tight">
                 <span>{adega.emoji}</span>
                 <span>{adega.name}</span>
               </div>

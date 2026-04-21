@@ -112,13 +112,12 @@ export function WineCard({ wine, adega, onDrink, onEdit, onDelete, onStock, onEx
         </div>
 
         {/* Body */}
-        <div className="p-5 pt-0 pb-4 flex-1 flex flex-col gap-0.5 min-h-[120px] bg-white relative z-20 -mt-4 rounded-t-[24px]">
-          <div className="h-1.5 w-10 bg-black/5 rounded-full mx-auto my-3" />
+        <div className="p-5 pt-4 pb-4 flex-1 flex flex-col gap-0.5 min-h-[120px] bg-white relative z-20">
           <h3 className="font-serif italic text-text-main text-[17px] leading-tight min-h-[2.8rem] flex items-center pr-2">
             {wine.name}
           </h3>
           {wine.producer && (
-            <p className="text-[13px] font-medium text-text-sub truncate opacity-80">{wine.producer}</p>
+            <p className="text-[13px] font-bold text-text-sub truncate opacity-70">{wine.producer}</p>
           )}
           {(wine.country || wine.grape) && (
             <p className="text-[12px] text-text-muted flex items-center gap-1.5 mt-1">
@@ -128,12 +127,12 @@ export function WineCard({ wine, adega, onDrink, onEdit, onDelete, onStock, onEx
           )}
           
           <div className="mt-auto pt-4 flex items-center justify-between border-t border-black/5">
-            <div className="flex items-center gap-1 text-[13px] text-text-main font-bold">
-               <span className="text-sm">📦</span>
-               <span className="ml-1">{wine.qty} un</span>
+            <div className="flex items-center gap-1.5 text-[12px] text-text-main font-bold uppercase tracking-wider">
+               <Package size={14} className="text-brand-wine/40" />
+               <span>{wine.qty} un</span>
             </div>
             {adega && (
-              <div className="flex items-center gap-1.5 py-1 px-2.5 bg-cream-dark rounded-xl text-[11px] text-text-sub font-bold">
+              <div className="flex items-center gap-1.5 text-[11px] text-text-sub font-bold uppercase tracking-tight">
                 <span>{adega.emoji}</span>
                 <span>{adega.name}</span>
               </div>

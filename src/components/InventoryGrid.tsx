@@ -134,26 +134,26 @@ export function InventoryGrid({ groupedItems, mode, adegas, isAdmin, groupBy, on
   return (
     <div className="space-y-4">
       {/* Search & Filter Bar - Forced Single Line */}
-      <div className="flex flex-row items-center gap-1.5 sm:gap-3 bg-white/80 backdrop-blur-md border border-black/5 rounded-[24px] p-2 mb-3 shadow-old overflow-x-auto no-scrollbar">
+      <div className="flex flex-row items-center gap-1.5 sm:gap-3 bg-white/50 backdrop-blur-md border border-black/5 rounded-[28px] p-1.5 mb-4 shadow-sm overflow-x-auto no-scrollbar">
         {/* Compact Search Input (Much smaller) */}
-        <div className="relative w-[42%] min-w-[120px] shrink-0 ml-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted opacity-40" size={14} />
+        <div className="relative w-[46%] min-w-[130px] shrink-0 ml-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted opacity-40" size={14} />
           <input 
             type="text"
             placeholder={`Buscar...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-cream-dark/50 border border-black/5 rounded-2xl py-2 pl-9 pr-8 text-[16px] sm:text-[13px] font-bold outline-none focus:border-brand-wine/20 transition-all text-text-main"
+            className="w-full bg-cream-dark/50 border border-black/5 rounded-[20px] py-2.5 pl-9 pr-8 text-[16px] sm:text-[14px] font-bold outline-none focus:border-brand-wine/20 transition-all text-text-main"
           />
           {search && (
             <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-brand-wine p-0.5">
-              <X size={12} />
+              <X size={14} />
             </button>
           )}
         </div>
         
-        {/* The 5 Predefined Action Buttons - Same Line */}
-        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto pr-1">
+        {/* The Action Buttons - Same Line */}
+        <div className="flex items-center gap-1 shrink-0 ml-auto pr-1">
           {mode === 'spirits' && (
             <SortButton 
               active={sortBy === 'level'} 
@@ -183,14 +183,14 @@ export function InventoryGrid({ groupedItems, mode, adegas, isAdmin, groupBy, on
             title="Pontuados"
           />
           
-          <div className="w-[1px] h-5 bg-black/5 mx-0.5" />
+          <div className="w-[1px] h-4 bg-black/5 mx-1" />
 
           <button 
             onClick={() => setShowFilters(!showFilters)}
-            className={`w-10 h-10 flex items-center justify-center rounded-2xl border transition-all shrink-0 ${
+            className={`w-10 h-10 flex items-center justify-center rounded-[18px] border transition-all shrink-0 ${
               showFilters 
-                ? 'bg-brand-wine text-white border-brand-wine shadow-md' 
-                : 'bg-white border-black/10 text-text-sub hover:bg-cream-dark'
+                ? 'bg-brand-wine text-white border-brand-wine shadow-lg' 
+                : 'bg-white border-black/5 text-text-sub hover:bg-cream-dark'
             }`}
           >
             <Filter size={18} />
