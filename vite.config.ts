@@ -12,7 +12,7 @@ export default defineConfig(({mode}) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+        includeAssets: ['apple-touch-icon.png', 'icon-adega-v3.png'],
         manifest: {
           name: 'Adega Pessoal',
           short_name: 'Adega',
@@ -23,6 +23,11 @@ export default defineConfig(({mode}) => {
           orientation: 'portrait',
           icons: [
             {
+              src: 'apple-touch-icon.png',
+              sizes: '180x180',
+              type: 'image/png'
+            },
+            {
               src: 'icon-adega-v3.png',
               sizes: '192x192',
               type: 'image/png'
@@ -30,13 +35,8 @@ export default defineConfig(({mode}) => {
             {
               src: 'pwa-512x512.png',
               sizes: '512x512',
-              type: 'image/png'
-            },
-            {
-              src: 'pwa-512x512.png',
-              sizes: '512x512',
               type: 'image/png',
-              purpose: 'any'
+              purpose: 'any maskable'
             }
           ]
         },
