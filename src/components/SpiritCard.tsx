@@ -69,13 +69,13 @@ export function SpiritCard({ spirit, adega, onDrink, onEdit, onDelete, onStock, 
               )}
             </div>
             
-            <div className="flex justify-between items-end">
-              <div className={`px-3 py-1 rounded-full text-[9px] font-bold text-white shadow-sm backdrop-blur-sm ${getLevelColor(spirit.isOpen ? spirit.level : 100)} opacity-90 uppercase tracking-widest`}>
-                {spirit.isOpen && spirit.level === 0 ? 'Vazia' : `Nível: ${spirit.isOpen ? spirit.level : 100}%`}
+            <div className="flex justify-between items-end gap-1">
+              <div className={`px-2 py-0.5 rounded-full text-[8px] font-bold text-white shadow-sm backdrop-blur-sm ${getLevelColor(spirit.isOpen ? spirit.level : 100)} opacity-90 whitespace-nowrap`}>
+                {spirit.isOpen && spirit.level === 0 ? 'Vazia' : `Nív. ${spirit.isOpen ? spirit.level : 100}%`}
               </div>
               {spirit.abv && (
-                <div className="bg-white/90 px-3 py-1 rounded-full text-[9px] font-bold text-text-muted backdrop-blur-sm tracking-tight uppercase">
-                  {spirit.abv}% Abv
+                <div className="bg-white/90 px-2 py-0.5 rounded-full text-[8px] font-bold text-text-muted backdrop-blur-sm whitespace-nowrap">
+                  {spirit.abv}% vol
                 </div>
               )}
             </div>
@@ -83,7 +83,7 @@ export function SpiritCard({ spirit, adega, onDrink, onEdit, onDelete, onStock, 
         </div>
 
         <div className="p-5 pt-4 pb-4 flex-1 flex flex-col gap-0.5 min-h-[120px] bg-white relative z-20">
-          <h3 className="font-serif italic text-text-main text-[17px] leading-tight min-h-[2.8rem] flex items-center pr-2">
+          <h3 className="font-serif italic text-text-main text-[17px] leading-tight h-[2.8rem] overflow-hidden line-clamp-2 flex items-center pr-2">
             {spirit.name}
           </h3>
           {spirit.producer && (
@@ -95,14 +95,14 @@ export function SpiritCard({ spirit, adega, onDrink, onEdit, onDelete, onStock, 
               {spirit.country} {spirit.country && spirit.aging && '·'} {spirit.aging}
             </p>
           )}
-          
-          <div className="mt-auto pt-4 flex items-center justify-between border-t border-black/5">
-            <div className="flex items-center gap-1.5 text-[12px] text-text-main font-bold uppercase tracking-wider">
-               <Package size={14} className={spirit.isOpen ? 'text-emerald-700' : 'text-brand-wine/40'} />
-               <span>{spirit.isOpen ? 'ABERTA' : `${spirit.qty} un.`}</span>
+
+          <div className="mt-auto pt-3 flex items-center justify-between border-t border-black/5">
+            <div className="flex items-center gap-1 text-[11px] text-text-main font-bold">
+               <Package size={12} className={spirit.isOpen ? 'text-emerald-700' : 'text-brand-wine/40'} />
+               <span>{spirit.isOpen ? 'Aberta' : `${spirit.qty} un`}</span>
             </div>
             {adega && (
-              <div className="flex items-center gap-1.5 text-[11px] text-text-sub font-bold uppercase tracking-tight">
+              <div className="flex items-center gap-1 text-[10px] text-text-sub font-bold">
                 <span>{adega.emoji}</span>
                 <span>{adega.name}</span>
               </div>
@@ -110,14 +110,14 @@ export function SpiritCard({ spirit, adega, onDrink, onEdit, onDelete, onStock, 
           </div>
         </div>
 
-        <div className={`p-4 pt-0 grid ${isAdmin ? 'grid-cols-5' : 'grid-cols-2'} gap-1.5 sm:gap-2`}>
+        <div className={`px-2 pb-2 pt-0 grid ${isAdmin ? 'grid-cols-5 gap-1' : 'grid-cols-2 gap-2'}`}>
           {isAdmin ? (
             <>
-              <CircularAction icon={<Edit3 size={15} />} color="bg-cream-deep text-text-sub" onClick={() => onEdit?.(spirit)} />
-              <CircularAction icon={<BookOpen size={15} />} color="bg-brand-wine/10 text-brand-wine" onClick={() => onExpert?.(spirit)} />
-              <CircularAction icon={<GlassWater size={15} />} color="bg-brand-wine text-white" onClick={() => onDrink?.(spirit)} />
-              <CircularAction icon={<Package size={15} />} color="bg-cream-deep text-text-sub" onClick={() => onStock?.(spirit)} />
-              <CircularAction icon={<Trash2 size={15} />} color="bg-red-50 text-red-600" onClick={() => onDelete?.(spirit)} />
+              <CircularAction icon={<Edit3 size={13} />} color="bg-cream-deep text-text-sub" onClick={() => onEdit?.(spirit)} admin />
+              <CircularAction icon={<BookOpen size={13} />} color="bg-brand-wine/10 text-brand-wine" onClick={() => onExpert?.(spirit)} admin />
+              <CircularAction icon={<GlassWater size={13} />} color="bg-brand-wine text-white" onClick={() => onDrink?.(spirit)} admin />
+              <CircularAction icon={<Package size={13} />} color="bg-cream-deep text-text-sub" onClick={() => onStock?.(spirit)} admin />
+              <CircularAction icon={<Trash2 size={13} />} color="bg-red-50 text-red-600" onClick={() => onDelete?.(spirit)} admin />
             </>
           ) : (
             <>
@@ -167,13 +167,13 @@ export function SpiritCard({ spirit, adega, onDrink, onEdit, onDelete, onStock, 
   );
 }
 
-function CircularAction({ icon, label, onClick, className = '', color = '', showLabel = false }: any) {
+function CircularAction({ icon, label, onClick, className = '', color = '', showLabel = false, admin = false }: any) {
   return (
-    <button 
+    <button
       onClick={onClick}
-      className={`flex flex-col items-center justify-center gap-1.5 transition-all active:scale-90 ${showLabel ? 'flex-1' : ''} ${className}`}
+      className={`w-full flex flex-col items-center justify-center gap-1 transition-all active:scale-90 ${className}`}
     >
-      <div className={`w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl sm:rounded-2xl shadow-sm ${color}`}>
+      <div className={`${admin ? 'w-full aspect-square' : 'w-10 h-10 sm:w-11 sm:h-11'} flex items-center justify-center rounded-xl shadow-sm ${color}`}>
         {icon}
       </div>
       {showLabel && (
