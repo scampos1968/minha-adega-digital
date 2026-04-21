@@ -549,9 +549,9 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
-              className="space-y-4"
+              className="space-y-2"
             >
-              <div className="sticky top-[64px] z-40 -mx-4 px-4 bg-cream/80 backdrop-blur-md py-2.5 overflow-x-auto no-scrollbar border-b border-black/5">
+              <div className="sticky top-[64px] z-40 -mx-4 px-4 bg-cream/80 backdrop-blur-md py-1 overflow-x-auto no-scrollbar border-b border-black/5">
                 <AdegaTabs 
                   adegas={adegas} 
                   activeId={activeAdega} 
