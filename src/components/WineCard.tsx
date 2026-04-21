@@ -78,32 +78,32 @@ export function WineCard({ wine, adega, onDrink, onEdit, onDelete, onStock, onEx
           <div className="absolute inset-0 p-3 flex flex-col justify-between pointer-events-none z-10">
             <div className="flex justify-between items-start">
               {wine.vintage ? (
-                <div className="bg-white/88 px-2.5 py-1 rounded-[20px] text-[11px] font-medium text-brand-wine shadow-sm backdrop-blur-sm">
+                <div className="bg-white/88 px-2.5 py-1 rounded-[20px] text-[9.5px] font-medium text-brand-wine shadow-sm backdrop-blur-sm [font-variant:small-caps] capitalize">
                   {wine.vintage}
                 </div>
               ) : <div />}
               {wine.score && (
-                <div className="bg-white/88 px-2.5 py-1 rounded-[20px] text-[11px] font-medium text-brand-gold flex items-center gap-1 shadow-sm backdrop-blur-sm">
-                  <Star size={11} fill="currentColor" />
-                  {wine.score} pts
+                <div className="bg-white/88 px-2.5 py-1 rounded-[20px] text-[9.5px] font-medium text-brand-gold flex items-center gap-1 shadow-sm backdrop-blur-sm [font-variant:small-caps] capitalize">
+                  <Star size={10} fill="currentColor" />
+                  {wine.score} Pts
                 </div>
               )}
             </div>
             
             <div className="flex justify-between items-end">
-              <div className="bg-brand-wine/85 px-2 py-0.5 rounded-[20px] text-[10px] font-medium text-white shadow-sm backdrop-blur-sm uppercase tracking-[0.3px]">
+              <div className="bg-brand-wine/85 px-2 py-0.5 rounded-[20px] text-[9px] font-medium text-white shadow-sm backdrop-blur-sm [font-variant:small-caps] capitalize tracking-[0.3px]">
                 {wine.type}
               </div>
               {isEmpty ? (
-                <div className="bg-black/60 px-2 py-0.5 rounded-[20px] text-[10px] font-medium text-white backdrop-blur-sm">
-                  {wine.type === 'Porto' || wine.type === 'Sobremesa' ? '✓ VAZIA' : '✓ CONSUMIDO'}
+                <div className="bg-black/60 px-2 py-0.5 rounded-[20px] text-[9px] font-medium text-white backdrop-blur-sm [font-variant:small-caps] capitalize">
+                  {wine.type === 'Porto' || wine.type === 'Sobremesa' ? 'Vazia' : 'Consumido'}
                 </div>
               ) : (
                 (wine.drinkFrom && wine.drinkUntil && 
                  new Date().getFullYear() >= wine.drinkFrom && 
                  new Date().getFullYear() <= wine.drinkUntil) && (
-                  <div className="bg-emerald-700/85 px-2 py-0.5 rounded-[20px] text-[10px] font-medium text-white shadow-sm backdrop-blur-sm">
-                     🎯 NO PONTO
+                  <div className="bg-emerald-700/85 px-2 py-0.5 rounded-[20px] text-[9px] font-medium text-white shadow-sm backdrop-blur-sm [font-variant:small-caps] capitalize">
+                     No ponto
                   </div>
                 )
               )}

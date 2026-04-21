@@ -10,6 +10,7 @@ import { VoiceModal } from './components/VoiceModal';
 import { ConsumptionCard } from './components/ConsumptionCard';
 import { StockModal } from './components/StockModal';
 import { ReportsModal } from './components/ReportsModal';
+import { StatsModal } from './components/StatsModal';
 import { ItemModal } from './components/ItemModal';
 import { ImportPhotosModal } from './components/ImportPhotosModal';
 import { AnalysisModal } from './components/AnalysisModal';
@@ -33,7 +34,7 @@ export default function App() {
   const [groupBy, setGroupBy] = useState<string>('none');
   
   // Modal state
-  const [activeModal, setActiveModal] = useState<'expert' | 'drink' | 'edit' | 'stock' | 'voice' | 'inout' | 'scan' | null>(null);
+  const [activeModal, setActiveModal] = useState<'expert' | 'drink' | 'edit' | 'stock' | 'voice' | 'inout' | 'scan' | 'stats' | 'reports' | null>(null);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [scannedData, setScannedData] = useState<{ data: any, imageUrl: string } | null>(null);
   const [scanQueue, setScanQueue] = useState<{ data: any, imageUrl: string }[]>([]);
@@ -464,6 +465,7 @@ export default function App() {
         onRefresh={boot}
         onLogout={handleLogout}
         onInout={() => setActiveModal('inout')}
+        onReports={() => setActiveModal('reports')}
       />
       
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 pt-1 pb-24 md:px-8">
@@ -538,13 +540,21 @@ export default function App() {
       </main>
 
       {/* Bottom Bar for iPhone Optimization */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-black/5 px-6 pb-safe pt-3 flex items-center justify-between z-40 md:hidden shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-black/5 px-6 pt-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex items-center justify-between z-40 shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
         <button 
           onClick={() => setView('cellar')} 
           className={`flex flex-col items-center gap-1 transition-all ${view === 'cellar' ? 'text-brand-wine' : 'text-text-muted'}`}
         >
-          <LayoutGrid size={22} strokeWidth={view === 'cellar' ? 2.5 : 2} />
-          <span className="text-[10px] font-bold uppercase tracking-tighter">Adega</span>
+          <LayoutGrid size={20} strokeWidth={view === 'cellar' ? 2.5 : 2} />
+          <span className="text-[9px] font-bold uppercase tracking-tighter">Adega</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveModal('stats')} 
+          className={`flex flex-col items-center gap-1 transition-all ${activeModal === 'stats' ? 'text-brand-wine' : 'text-text-muted'}`}
+        >
+          <BarChart3 size={20} strokeWidth={activeModal === 'stats' ? 2.5 : 2} />
+          <span className="text-[9px] font-bold uppercase tracking-tighter">Estatística</span>
         </button>
         
         <div className="flex items-center gap-4">
@@ -558,9 +568,9 @@ export default function App() {
           {isAdmin && (
             <button 
               onClick={() => { setSelectedItem(null); setScannedData(null); setActiveModal('edit'); }}
-              className="w-14 h-14 flex items-center justify-center bg-brand-wine text-white rounded-[20px] shadow-lg shadow-brand-wine/25 active:scale-90 transition-all -mt-8 border-4 border-white"
+              className="w-12 h-12 flex items-center justify-center bg-brand-wine text-white rounded-2xl shadow-lg shadow-brand-wine/20 active:scale-90 transition-all border border-brand-wine/20"
             >
-              <Plus size={28} strokeWidth={3} />
+              <Plus size={24} strokeWidth={2.5} />
             </button>
           )}
 
@@ -576,8 +586,8 @@ export default function App() {
           onClick={() => setView('history')} 
           className={`flex flex-col items-center gap-1 transition-all ${view === 'history' ? 'text-brand-wine' : 'text-text-muted'}`}
         >
-          <History size={22} strokeWidth={view === 'history' ? 2.5 : 2} />
-          <span className="text-[10px] font-bold uppercase tracking-tighter">Histórico</span>
+          <History size={20} strokeWidth={view === 'history' ? 2.5 : 2} />
+          <span className="text-[9px] font-bold uppercase tracking-tighter">Histórico</span>
         </button>
       </nav>
 
@@ -673,6 +683,32 @@ export default function App() {
             onClose={() => setActiveModal(null)}
             onBackup={handleBackup}
             onRestore={handleRestore}
+          />
+        )}
+        {activeModal === 'stats' && (
+          <StatsModal 
+            onClose={() => setActiveModal(null)}
+            wines={wines}
+            spirits={spirits}
+            consumptions={consumptions}
+            spiritCons={spiritCons}
+            adegas={adegas}
+            context={null} // Global Statistics
+          />
+        )}
+        {activeModal === 'reports' && (
+          <StatsModal 
+            onClose={() => setActiveModal(null)}
+            wines={wines}
+            spirits={spirits}
+            consumptions={consumptions}
+            spiritCons={spiritCons}
+            adegas={adegas}
+            context={{
+                mode,
+                view,
+                adegaId: activeAdega
+            }}
           />
         )}
       </AnimatePresence>
@@ -853,7 +889,7 @@ function LoginScreen({ onAdminLogin, onGuestLogin }: { onAdminLogin: (token: str
   );
 }
 
-function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, onLogout, onInout }: any) {
+function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, onLogout, onInout, onReports }: any) {
   return (
     <header className="sticky top-0 z-50 bg-cream/96 backdrop-blur-md border-b border-black/5 h-auto py-2 flex items-center">
       <div className="max-w-[1300px] mx-auto w-full px-4 flex flex-wrap items-center justify-between gap-y-2">
@@ -897,6 +933,10 @@ function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, 
         </div>
 
         <nav className="flex items-center gap-0.5 sm:gap-1">
+          <button onClick={onReports} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Relatório de Análise">
+            <BarChart3 size={16} />
+          </button>
+          
           {isAdmin && (
             <button onClick={onInout} className="p-1.5 sm:p-2 text-text-sub hover:bg-black/5 rounded-full transition-colors" title="Gestão da Base de Dados">
               <Database size={16} />
@@ -925,10 +965,21 @@ function HeaderBtn({ icon, label, onClick, className }: any) {
 }
 
 function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }: any) {
-  const allAdegas = [{ id: 'all', name: 'Todas', emoji: '🏢' }, ...adegas];
+  // Sort adegas by specific order: Membeca, Rio, SP
+  const order = ['Membeca', 'Rio', 'SP'];
+  const sortedAdegas = [...adegas].sort((a, b) => {
+    const idxA = order.indexOf(a.name);
+    const idxB = order.indexOf(b.name);
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+    if (idxA !== -1) return -1;
+    if (idxB !== -1) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  const allAdegas = [...sortedAdegas, { id: 'all', name: 'Todas', emoji: '🏢' }];
   
   return (
-    <div className="flex flex-wrap gap-2.5 sm:gap-4 pb-1 md:mx-0 md:px-0">
+    <div className="flex flex-nowrap gap-2 pb-1 md:flex-wrap md:gap-4 md:mx-0 md:px-0">
       {allAdegas.map((a) => {
         const count = mode === 'wines' 
           ? (a.id === 'all' ? wines.reduce((acc: any, w: any) => acc + w.qty, 0) : wines.filter((w: any) => w.adegaId === a.id).reduce((acc: any, w: any) => acc + w.qty, 0))
@@ -952,15 +1003,6 @@ function AdegaTabs({ adegas, activeId, onChange, mode, wines, spirits, isAdmin }
           </button>
         );
       })}
-      {isAdmin && (
-        <button 
-          onClick={() => {}} // Placeholder or proper add adega action
-          className="flex items-center gap-2 py-1 px-3 sm:px-4 rounded-[12px] border border-dashed border-parchment text-text-muted hover:border-brand-wine hover:text-brand-wine transition-all text-xs font-medium shrink-0 font-sans shadow-sm bg-white/50"
-        >
-          <Plus size={14} />
-          <span>Nova</span>
-        </button>
-      )}
     </div>
   );
 }

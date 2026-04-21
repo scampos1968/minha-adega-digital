@@ -41,6 +41,14 @@
   @apply bg-white/94 backdrop-blur-lg border-b border-black/10;
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 4px;

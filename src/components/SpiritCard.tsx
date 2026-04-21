@@ -58,24 +58,24 @@ export function SpiritCard({ spirit, adega, onDrink, onEdit, onDelete, onStock, 
           
           <div className="absolute inset-0 p-3 flex flex-col justify-between pointer-events-none z-10">
             <div className="flex justify-between items-start">
-               <div className="bg-white/88 px-2.5 py-1 rounded-[20px] text-[11px] font-medium text-text-main shadow-sm backdrop-blur-sm uppercase">
+               <div className="bg-white/88 px-2.5 py-1 rounded-[20px] text-[9.5px] font-medium text-text-main shadow-sm backdrop-blur-sm [font-variant:small-caps] capitalize">
                   {spirit.type}
                 </div>
               {spirit.score && (
-                <div className="bg-white/88 px-2.5 py-1 rounded-[20px] text-[11px] font-medium text-brand-gold flex items-center gap-1 shadow-sm backdrop-blur-sm">
-                  <Star size={11} fill="currentColor" />
-                  {spirit.score}
+                <div className="bg-white/88 px-2.5 py-1 rounded-[20px] text-[9.5px] font-medium text-brand-gold flex items-center gap-1 shadow-sm backdrop-blur-sm [font-variant:small-caps] capitalize">
+                  <Star size={10} fill="currentColor" />
+                  {spirit.score} Pts
                 </div>
               )}
             </div>
             
             <div className="flex justify-between items-end">
-              <div className={`px-2 py-0.5 rounded-[20px] text-[10px] font-medium text-white shadow-sm backdrop-blur-sm ${getLevelColor(spirit.isOpen ? spirit.level : 100)} opacity-90`}>
-                {spirit.isOpen && spirit.level === 0 ? '✓ VAZIA' : `NÍVEL: ${spirit.isOpen ? spirit.level : 100}%`}
+              <div className={`px-2 py-0.5 rounded-[20px] text-[9px] font-medium text-white shadow-sm backdrop-blur-sm ${getLevelColor(spirit.isOpen ? spirit.level : 100)} opacity-90 [font-variant:small-caps] capitalize tracking-wide`}>
+                {spirit.isOpen && spirit.level === 0 ? 'Vazia' : `Nível: ${spirit.isOpen ? spirit.level : 100}%`}
               </div>
               {spirit.abv && (
-                <div className="bg-white/88 px-2 py-0.5 rounded-[20px] text-[9px] font-medium text-text-muted backdrop-blur-sm">
-                  {spirit.abv}%
+                <div className="bg-white/88 px-2 py-0.5 rounded-[20px] text-[8.5px] font-medium text-text-muted backdrop-blur-sm [font-variant:small-caps] capitalize">
+                  {spirit.abv}% Abv
                 </div>
               )}
             </div>
