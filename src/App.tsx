@@ -14,8 +14,10 @@ import { StatsModal } from './components/StatsModal';
 import { ItemModal } from './components/ItemModal';
 import { ImportPhotosModal } from './components/ImportPhotosModal';
 import { AnalysisModal } from './components/AnalysisModal';
+import { BackupManifest, applyBackupRestore, createBackupManifest, downloadBackupFile } from './lib/backup';
 
 export default function App() {
+  const CACHE_KEY = 'adega_cached_snapshot_v1';
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -26,7 +28,9 @@ export default function App() {
   const [spirits, setSpirits] = useState<Spirit[]>([]);
   const [consumptions, setConsumptions] = useState<Consumption[]>([]);
   const [spiritCons, setSpiritCons] = useState<SpiritConsumption[]>([]);
-  const [syncStatus, setSyncStatus] = useState<'ok' | 'saving' | 'error'>('ok');
+  const [syncStatus, setSyncStatus] = useState<'ok' | 'saving' | 'error' | 'offline'>('ok');
+  const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
 
   const [activeAdega, setActiveAdega] = useState<string>('all');
   
@@ -66,13 +70,59 @@ export default function App() {
       handleLogout();
       alert('Sua sessão expirou. Por favor, faça login novamente.');
     };
+    const handleOnline = () => {
+      setIsOnline(true);
+      setSyncStatus(prev => (prev === 'offline' ? 'ok' : prev));
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      setSyncStatus(prev => (prev === 'saving' ? prev : 'offline'));
+    };
     window.addEventListener('adega-auth-error', handleAuthError);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
     return () => {
       clearTimeout(sessionTimer);
       clearTimeout(safetyTimer);
       window.removeEventListener('adega-auth-error', handleAuthError);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  function saveSnapshotToCache(snapshot: {
+    adegas: Adega[];
+    wines: Wine[];
+    consumptions: Consumption[];
+    spirits: Spirit[];
+    spiritCons: SpiritConsumption[];
+  }) {
+    const cached = {
+      ...snapshot,
+      savedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
+    setLastSyncedAt(cached.savedAt);
+  }
+
+  function loadSnapshotFromCache(): boolean {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return false;
+    try {
+      const cached = JSON.parse(raw);
+      setAdegas(cached.adegas || []);
+      setWines(cached.wines || []);
+      setConsumptions(cached.consumptions || []);
+      setSpirits(cached.spirits || []);
+      setSpiritCons(cached.spiritCons || []);
+      setLastSyncedAt(cached.savedAt || null);
+      setSyncStatus('offline');
+      return true;
+    } catch (e) {
+      console.error('Failed to read local snapshot', e);
+      return false;
+    }
+  }
 
   async function checkSession() {
     try {
@@ -118,10 +168,21 @@ export default function App() {
       ]);
 
       setAdegas(adegasRaw as Adega[]);
-      setWines((winesRaw as any[]).map(wineFromDB));
-      setConsumptions((consRaw as any[]).map(consumptionFromDB));
-      setSpirits((spiritsRaw as any[]).map(spiritFromDB));
-      setSpiritCons((sConsRaw as any[]).map(spiritConsumptionFromDB));
+      const nextWines = (winesRaw as any[]).map(wineFromDB);
+      const nextConsumptions = (consRaw as any[]).map(consumptionFromDB);
+      const nextSpirits = (spiritsRaw as any[]).map(spiritFromDB);
+      const nextSpiritCons = (sConsRaw as any[]).map(spiritConsumptionFromDB);
+      setWines(nextWines);
+      setConsumptions(nextConsumptions);
+      setSpirits(nextSpirits);
+      setSpiritCons(nextSpiritCons);
+      saveSnapshotToCache({
+        adegas: adegasRaw as Adega[],
+        wines: nextWines,
+        consumptions: nextConsumptions,
+        spirits: nextSpirits,
+        spiritCons: nextSpiritCons,
+      });
       
       console.log('Dados carregados:', { 
         adegas: (adegasRaw as any[]).length, 
@@ -132,10 +193,19 @@ export default function App() {
       setSyncStatus('ok');
     } catch (e) {
       console.error(e);
-      setSyncStatus('error');
+      const loadedFromCache = loadSnapshotFromCache();
+      if (!loadedFromCache) {
+        setSyncStatus(isOnline ? 'error' : 'offline');
+      }
     } finally {
       setLoading(false);
     }
+  }
+
+  function requireOnline(message: string) {
+    if (isOnline) return true;
+    alert(message);
+    return false;
   }
 
   const itemsToShow = mode === 'wines' 
@@ -178,8 +248,13 @@ export default function App() {
 
   const handlers = {
     onDrink: (item: any) => { setSelectedItem(item); setActiveModal('drink'); },
-    onEdit: (item: any) => { setSelectedItem(item); setActiveModal('edit'); },
+    onEdit: (item: any) => {
+      if (!requireOnline('A edição exige conexão para sincronizar com a base.')) return;
+      setSelectedItem(item);
+      setActiveModal('edit');
+    },
     onDelete: (item: any) => { 
+       if (!requireOnline('A exclusão exige conexão com a base.')) return;
        if(confirm('Tem certeza que deseja excluir?')) {
          setSyncStatus('saving');
          const table = mode === 'wines' ? 'wines' : 'spirits';
@@ -190,12 +265,20 @@ export default function App() {
          });
        }
     },
-    onStock: (item: any) => { setSelectedItem(item); setActiveModal('stock'); },
+    onStock: (item: any) => {
+      if (!requireOnline('A movimentação de estoque exige conexão com a base.')) return;
+      setSelectedItem(item);
+      setActiveModal('stock');
+    },
     onExpert: (item: any) => { setSelectedItem(item); setActiveModal('expert'); },
-    onInout: () => setActiveModal('inout'),
+    onInout: () => {
+      if (!requireOnline('Esse painel precisa de conexão para consultar e restaurar a base.')) return;
+      setActiveModal('inout');
+    },
   };
 
   async function handleDeleteConsumption(id: string, isSpirit: boolean) {
+    if (!requireOnline('A exclusão do histórico exige conexão com a base.')) return;
     if (!isAdmin) return;
     if (!confirm('Excluir este registro do histórico permanentemente?')) return;
     setSyncStatus('saving');
@@ -209,6 +292,7 @@ export default function App() {
   }
 
   async function handleItemSave(data: any) {
+    if (!requireOnline('Salvar alterações exige conexão com a base.')) return;
     setSyncStatus('saving');
     try {
       const isSpirit = mode === 'spirits';
@@ -239,6 +323,7 @@ export default function App() {
   }
 
   async function handleDrinkSave(data: any) {
+    if (!requireOnline('Registrar consumo exige conexão com a base.')) return;
     if (!isAdmin) {
       const pass = prompt('Digite a senha de consumo para continuar:');
       if (pass?.toLowerCase().trim() !== 'membeca') {
@@ -321,6 +406,7 @@ export default function App() {
   }
 
   async function handleSavePersonalNotes(id: string, notes: string) {
+    if (!requireOnline('Salvar notas pessoais exige conexão com a base.')) return;
     if (!isAdmin) return;
     setSyncStatus('saving');
     try {
@@ -342,6 +428,7 @@ export default function App() {
   }
 
   async function handleSaveExpertSummary(id: string, summary: string) {
+    if (!requireOnline('Salvar a análise exige conexão com a base.')) return;
     if (!isAdmin) return;
     setSyncStatus('saving');
     try {
@@ -363,6 +450,7 @@ export default function App() {
   }
 
   async function handleUpdateScore(item: Wine | Spirit, newScore: number) {
+    if (!requireOnline('Atualizar pontuação exige conexão com a base.')) return;
     if (!isAdmin) return;
     setSyncStatus('saving');
     try {
@@ -398,6 +486,14 @@ export default function App() {
       : spiritCons.map(c => ({ ...c, isSpirit: true }));
     return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [consumptions, spiritCons, mode]);
+
+  const backupExistingIds = useMemo(() => ({
+    adegas: new Set(adegas.map(item => item.id)),
+    wines: new Set(wines.map(item => item.id)),
+    spirits: new Set(spirits.map(item => item.id)),
+    consumptions: new Set(consumptions.map(item => item.id)),
+    spirit_consumptions: new Set(spiritCons.map(item => item.id)),
+  }), [adegas, wines, spirits, consumptions, spiritCons]);
 
   if (loading) {
     return (
@@ -460,35 +556,35 @@ export default function App() {
     }
   }
 
+  async function fetchBackupSnapshot(environment: string) {
+    const [adegasRaw, winesRaw, consRaw, spiritsRaw, sConsRaw] = await Promise.all([
+      sbGet('adegas'),
+      sbGet('wines'),
+      sbGet('consumptions'),
+      sbGet('spirits'),
+      sbGet('spirit_consumptions')
+    ]);
+
+    return createBackupManifest({
+      adegas: adegasRaw,
+      wines: winesRaw,
+      spirits: spiritsRaw,
+      consumptions: consRaw,
+      spirit_consumptions: sConsRaw,
+    }, {
+      environment,
+      supabase_url: import.meta.env.VITE_SUPABASE_URL || null,
+      schema_version: '1.0',
+    });
+  }
+
   async function handleBackup() {
+    if (!requireOnline('O backup completo precisa de conexão para buscar a versão mais recente da base.')) return;
     if (!isAdmin) return;
     setSyncStatus('saving');
     try {
-      const [adegasRaw, winesRaw, consRaw, spiritsRaw, sConsRaw] = await Promise.all([
-        sbGet('adegas'),
-        sbGet('wines'),
-        sbGet('consumptions'),
-        sbGet('spirits'),
-        sbGet('spirit_consumptions')
-      ]);
-
-      const data = {
-        adegas: adegasRaw,
-        wines: winesRaw,
-        spirits: spiritsRaw,
-        consumptions: consRaw,
-        spirit_consumptions: sConsRaw,
-        version: '2.0',
-        timestamp: new Date().toISOString()
-      };
-      
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `adega98_backup_${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const data = await fetchBackupSnapshot('production');
+      downloadBackupFile(data, `adega98_backup_${new Date().toISOString().split('T')[0]}.json`);
       setSyncStatus('ok');
     } catch (e) {
       console.error(e);
@@ -497,29 +593,51 @@ export default function App() {
     }
   }
 
-  async function handleRestore(file: File) {
+  async function handleRestore(backup: BackupManifest) {
+    if (!requireOnline('A restauração exige conexão com a base.')) return;
     if (!isAdmin) return;
-    if (!confirm('ATENÇÃO: A restauração pode duplicar registros se não for cuidadosa. Os registros existentes com o mesmo ID serão atualizados. Deseja continuar?')) return;
+    if (!confirm('ATENÇÃO: o restore v1 faz merge por ID. Registros existentes com o mesmo ID serão atualizados; IDs novos serão inseridos. Deseja continuar?')) return;
     
     setSyncStatus('saving');
     try {
-      const text = await file.text();
-      const data = JSON.parse(text);
-      
-      if (data.adegas?.length > 0) await sbUpsert('adegas', data.adegas);
-      if (data.wines?.length > 0) await sbUpsert('wines', data.wines);
-      if (data.spirits?.length > 0) await sbUpsert('spirits', data.spirits);
-      if (data.consumptions?.length > 0) await sbUpsert('consumptions', data.consumptions);
-      if (data.spirit_consumptions?.length > 0) await sbUpsert('spirit_consumptions', data.spirit_consumptions);
-      if (data.spiritCons?.length > 0) await sbUpsert('spirit_consumptions', data.spiritCons);
+      const preRestoreBackup = await fetchBackupSnapshot('pre-restore');
+      const preRestoreBackupName = `adega98_prerestore_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.json`;
+      downloadBackupFile(preRestoreBackup, preRestoreBackupName);
+
+      const report = await applyBackupRestore(backup, (table, rows) => sbUpsert(table, rows));
+      report.preRestoreBackupName = preRestoreBackupName;
+      if (!report.success) {
+        const appliedBeforeFailure = report.tables
+          .filter((table) => table.status === 'applied')
+          .map((table) => `${table.table}: ${table.total}`)
+          .join('\n');
+        const failedStep = report.tables.find((table) => table.status === 'failed');
+        throw new Error(
+          `Falha na tabela "${report.failedTable}".\n` +
+          (appliedBeforeFailure ? `Aplicado antes da falha:\n${appliedBeforeFailure}\n` : '') +
+          `Motivo: ${failedStep?.message || 'desconhecido'}\n` +
+          `Backup pré-restore: ${report.preRestoreBackupName}`
+        );
+      }
       
       await boot();
       setSyncStatus('ok');
-      alert('Base de dados restaurada com sucesso!');
+      const appliedSummary = report.tables
+        .filter((table) => table.status === 'applied')
+        .map((table) => `${table.table}: ${table.total}`)
+        .join('\n');
+      alert(
+        `Base restaurada com sucesso.\n\nBackup pré-restore salvo como:\n${report.preRestoreBackupName}\n\nTabelas aplicadas:\n${appliedSummary}`
+      );
     } catch (e) {
       console.error(e);
       setSyncStatus('error');
-      alert('Erro na restauração: ' + (e as Error).message);
+      const maybeMessage = (e as Error).message || 'Falha desconhecida.';
+      alert(
+        'A restauração falhou ou ficou parcial.\n\n' +
+        'Se algumas tabelas já foram aplicadas, use o backup pré-restore baixado automaticamente para recuperação manual.\n\n' +
+        'Detalhe técnico: ' + maybeMessage
+      );
     }
   }
 
@@ -531,6 +649,8 @@ export default function App() {
         view={view} 
         setView={setView} 
         syncStatus={syncStatus} 
+        isOnline={isOnline}
+        lastSyncedAt={lastSyncedAt}
         isAdmin={isAdmin}
         onRefresh={boot}
         onLogout={handleLogout}
@@ -539,6 +659,19 @@ export default function App() {
         onStats={() => setActiveModal('stats')}
         onHistory={() => setView(view === 'cellar' ? 'history' : 'cellar')}
       />
+
+      {!isOnline && (
+        <div className="sticky top-16 z-40 border-b border-amber-200/60 bg-amber-50/95 backdrop-blur px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-amber-900">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+            <span>Modo offline: exibindo a ultima versao sincronizada.</span>
+            {lastSyncedAt && (
+              <span className="text-[10px] tracking-[0.08em] text-amber-800/80 normal-case">
+                Ultima sync: {new Date(lastSyncedAt).toLocaleString('pt-BR')}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
       
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 pt-4 pb-32 md:px-8">
         <AnimatePresence mode="wait">
@@ -633,24 +766,40 @@ export default function App() {
 
           <div className="flex items-center gap-1 sm:gap-2.5 px-2 py-1 bg-black/5 rounded-[28px] border border-white/40 shadow-inner mx-2 sm:mx-4">
             <button 
-              onClick={() => setActiveModal('voice')} 
-              className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center text-text-main active:scale-90 transition-all hover:bg-white/50 rounded-full"
+              onClick={() => {
+                if (!requireOnline('A busca por voz com IA precisa de conexão.')) return;
+                setActiveModal('voice');
+              }} 
+              disabled={!isOnline}
+              className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center text-text-main active:scale-90 transition-all hover:bg-white/50 rounded-full disabled:opacity-35 disabled:hover:bg-transparent"
               title="Voz"
             >
               <Mic size={18} />
             </button>
             
             <button 
-              onClick={() => { setSelectedItem(null); setScannedData(null); setActiveModal('edit'); }}
-              className="w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center bg-brand-wine text-cream rounded-[18px] sm:rounded-[22px] shadow-xl sm:shadow-2xl shadow-brand-wine/30 active:scale-95 transition-all border border-white/10"
+              onClick={() => {
+                if (!requireOnline('Adicionar itens exige conexão para gravar no inventario.')) return;
+                setSelectedItem(null);
+                setScannedData(null);
+                setActiveModal('edit');
+              }}
+              disabled={!isOnline}
+              className="w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center bg-brand-wine text-cream rounded-[18px] sm:rounded-[22px] shadow-xl sm:shadow-2xl shadow-brand-wine/30 active:scale-95 transition-all border border-white/10 disabled:opacity-45 disabled:shadow-none"
               title="Adicionar"
             >
               <Plus size={22} strokeWidth={2.5} />
             </button>
 
             <button 
-              onClick={() => { setSelectedItem(null); setScannedData(null); setActiveModal('scan'); }}
-              className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center text-text-main active:scale-90 transition-all hover:bg-white/50 rounded-full"
+              onClick={() => {
+                if (!requireOnline('A analise de rotulos por foto precisa de conexão.')) return;
+                setSelectedItem(null);
+                setScannedData(null);
+                setActiveModal('scan');
+              }}
+              disabled={!isOnline}
+              className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center text-text-main active:scale-90 transition-all hover:bg-white/50 rounded-full disabled:opacity-35 disabled:hover:bg-transparent"
               title="Escanear"
             >
               <Camera size={18} />
@@ -760,6 +909,7 @@ export default function App() {
             onClose={() => setActiveModal(null)}
             onBackup={handleBackup}
             onRestore={handleRestore}
+            existingIds={backupExistingIds}
           />
         )}
         {activeModal === 'stats' && (
@@ -966,7 +1116,16 @@ function LoginScreen({ onAdminLogin, onGuestLogin }: { onAdminLogin: (token: str
   );
 }
 
-function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, onLogout, onInout, onReports, onStats, onHistory }: any) {
+function Header({ mode, setMode, view, setView, syncStatus, isOnline, lastSyncedAt, isAdmin, onRefresh, onLogout, onInout, onReports, onStats, onHistory }: any) {
+  const statusLabel = syncStatus === 'saving'
+    ? 'Sincronizando…'
+    : syncStatus === 'offline'
+      ? 'Offline'
+      : syncStatus === 'error'
+        ? 'Erro'
+        : isOnline
+          ? 'Online'
+          : 'Offline';
   return (
     <header className="sticky top-0 z-50 bg-cream/80 backdrop-blur-xl border-b border-black/5 pt-[env(safe-area-inset-top)] mb-[-env(safe-area-inset-top)]">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -981,9 +1140,14 @@ function Header({ mode, setMode, view, setView, syncStatus, isAdmin, onRefresh, 
                 <span className="text-[7px] bg-brand-wine text-cream px-1.5 py-0.5 rounded-full font-bold uppercase tracking-widest leading-none">Admin</span>
               )}
             </div>
-            <div className={`flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest transition-all ${syncStatus === 'saving' ? 'text-brand-gold' : syncStatus === 'error' ? 'text-red-700' : 'text-emerald-600'}`}>
-              <div className={`w-1 h-1 rounded-full ${syncStatus === 'saving' ? 'animate-pulse bg-brand-gold' : 'bg-current'}`} />
-              <span>{syncStatus === 'saving' ? 'Sincronizando…' : 'Online'}</span>
+            <div className={`flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest transition-all ${syncStatus === 'saving' ? 'text-brand-gold' : syncStatus === 'error' ? 'text-red-700' : syncStatus === 'offline' ? 'text-amber-700' : 'text-emerald-600'}`}>
+              <div className={`w-1 h-1 rounded-full ${syncStatus === 'saving' ? 'animate-pulse bg-brand-gold' : syncStatus === 'offline' ? 'bg-amber-700' : 'bg-current'}`} />
+              <span>{statusLabel}</span>
+              {syncStatus === 'offline' && lastSyncedAt && (
+                <span className="hidden sm:inline text-[8px] normal-case tracking-normal text-amber-900/70">
+                  {new Date(lastSyncedAt).toLocaleDateString('pt-BR')}
+                </span>
+              )}
             </div>
           </button>
         </div>

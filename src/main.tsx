@@ -3,13 +3,6 @@ import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
-// Unregister all service workers — SW caching was causing stale deploys to freeze the app.
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(registrations => {
-    for (const reg of registrations) reg.unregister();
-  });
-}
-
 // Emergency Clear via URL: adding ?clear=true to the URL will reset the app
 if (window.location.search.includes('clear=true')) {
   try {

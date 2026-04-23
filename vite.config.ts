@@ -11,9 +11,15 @@ export default defineConfig(({mode}) => {
       react(),
       tailwindcss(),
       VitePWA({
-        // Service worker disabled — only the web manifest is generated.
-        // SW caching was causing stale bundles to be served after deploys.
-        injectRegister: false,
+        injectRegister: 'auto',
+        registerType: 'autoUpdate',
+        workbox: {
+          cleanupOutdatedCaches: true,
+          clientsClaim: true,
+          skipWaiting: true,
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          navigateFallbackDenylist: [/^\/rest\//, /^\/auth\//],
+        },
         strategies: 'generateSW',
         manifest: {
           name: 'Adega Pessoal',

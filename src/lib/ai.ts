@@ -1,7 +1,15 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Wine, Spirit } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const apiKey = process.env.GEMINI_API_KEY;
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+
+function requireAiClient() {
+  if (!ai) {
+    throw new Error("GEMINI_API_KEY não configurada.");
+  }
+  return ai;
+}
 
 export interface DrinkWindow {
   drink_from: number | null;
@@ -13,7 +21,7 @@ export async function calcDrinkWindowGemini(wine: Wine): Promise<DrinkWindow | n
 Considere recomendações de críticos e notas de produtores. Com base nisso, retorne a janela de consumo em anos civis.`;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await requireAiClient().models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
@@ -67,7 +75,7 @@ Dados:
 ${details}`;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await requireAiClient().models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
@@ -120,7 +128,7 @@ INVENTÁRIO (${inventory.length} disponíveis): ${JSON.stringify(inventory)}
 `;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await requireAiClient().models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
@@ -181,7 +189,7 @@ Retorne APENAS um JSON com os campos identificados:
 Se não tiver certeza, deixe o campo como "".`;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await requireAiClient().models.generateContent({
       model: "gemini-3-flash-preview",
       contents: {
         parts: [
