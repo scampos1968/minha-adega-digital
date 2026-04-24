@@ -1164,9 +1164,9 @@ function Header({ mode, setMode, view, setView, syncStatus, isOnline, lastSynced
           </button>
 
           <button 
-            onClick={onStats} 
+            onClick={onReports} 
             className="w-10 h-10 flex items-center justify-center text-text-muted hover:bg-black/5 rounded-full transition-colors"
-            title="Estatísticas"
+            title="Relatório"
           >
             <BarChart3 size={18} />
           </button>
