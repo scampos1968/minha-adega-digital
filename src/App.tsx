@@ -487,6 +487,12 @@ export default function App() {
     return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [consumptions, spiritCons, mode]);
 
+  const reportContext = useMemo(() => ({
+    mode,
+    view,
+    adegaId: view === 'history' ? 'all' : activeAdega,
+  }), [mode, view, activeAdega]);
+
   const backupExistingIds = useMemo(() => ({
     adegas: new Set(adegas.map(item => item.id)),
     wines: new Set(wines.map(item => item.id)),
@@ -931,11 +937,7 @@ export default function App() {
             consumptions={consumptions}
             spiritCons={spiritCons}
             adegas={adegas}
-            context={{
-                mode,
-                view,
-                adegaId: activeAdega
-            }}
+            context={reportContext}
           />
         )}
       </AnimatePresence>

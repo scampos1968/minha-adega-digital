@@ -21,6 +21,17 @@ export function StatsModal({ onClose, wines, spirits, consumptions, spiritCons, 
   // If context is null, it's the "Global Statistics" (bottom button)
   const isGlobal = !context;
   const currentYear = 2026;
+  const isHistoryReport = context?.view === 'history';
+  const reportTitle = isGlobal
+    ? 'Estatísticas Globais'
+    : isHistoryReport
+      ? `Histórico de ${context?.mode === 'wines' ? 'Vinhos' : 'Spirits'}`
+      : (context?.adegaId === 'all' ? 'Todas as Adegas' : (adegas.find(a => a.id === context?.adegaId)?.name || 'Todas as Adegas'));
+  const reportSubtitle = isGlobal
+    ? 'Visão Geral do Acervo'
+    : isHistoryReport
+      ? `Relatório de ${context?.mode === 'wines' ? 'Histórico de Vinhos' : 'Histórico de Spirits'}`
+      : `Relatório de ${context?.mode === 'wines' ? 'Vinhos' : 'Spirits'}`;
   
   // Filtering data based on context
   let filteredWines = wines;
@@ -40,25 +51,27 @@ export function StatsModal({ onClose, wines, spirits, consumptions, spiritCons, 
   } else if (context.view === 'history') {
     // History reports: analyze consumed items
     if (context.mode === 'wines') {
+      filteredConsumptions = consumptions;
       // Use items from history (can have duplicates if consumed multiple times, which is correct for history volume)
-      filteredWines = consumptions
-        .filter(c => context.adegaId === 'all' ? true : c.wineSnapshot.adegaId === context.adegaId)
-        .map(c => c.wineSnapshot as WineType);
+      filteredWines = filteredConsumptions.map(c => c.wineSnapshot as WineType);
+      filteredSpiritCons = [];
+      filteredSpirits = [];
     } else {
-      filteredSpirits = spiritCons
-        .filter(c => context.adegaId === 'all' ? true : c.spiritSnapshot.adegaId === context.adegaId)
-        .map(c => c.spiritSnapshot as Spirit);
+      filteredSpiritCons = spiritCons;
+      filteredSpirits = filteredSpiritCons.map(c => c.spiritSnapshot as Spirit);
+      filteredConsumptions = [];
+      filteredWines = [];
     }
   }
 
   const activeAdega = context?.adegaId === 'all' ? { id: 'all', name: 'Todas as Adegas', emoji: '🏢' } : (adegas.find(a => a.id === context?.adegaId) || { id: 'all', name: 'Todas as Adegas', emoji: '🏢' });
 
   const totalWines = context?.view === 'history' 
-    ? consumptions.filter(c => context.adegaId === 'all' ? true : c.wineSnapshot.adegaId === context.adegaId).reduce((acc, c) => acc + (c.qty || 0), 0)
+    ? filteredConsumptions.reduce((acc, c) => acc + (c.qty || 0), 0)
     : filteredWines.reduce((acc, w) => acc + w.qty, 0);
     
   const totalSpirits = context?.view === 'history'
-    ? spiritCons.filter(c => context.adegaId === 'all' ? true : c.spiritSnapshot.adegaId === context.adegaId).length
+    ? filteredSpiritCons.length
     : filteredSpirits.reduce((acc, s) => acc + s.qty, 0);
 
   // Specialized Wine Stats
@@ -193,14 +206,14 @@ export function StatsModal({ onClose, wines, spirits, consumptions, spiritCons, 
         <div className="px-5 py-4 sm:px-8 sm:py-6 flex items-center justify-between border-b border-black/5 bg-white/50">
           <div className="flex items-center gap-3 sm:gap-4">
              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl sm:rounded-2xl shadow-sm border border-black/5 flex items-center justify-center text-xl sm:text-2xl">
-                {isGlobal ? <BarChart3 className="text-brand-wine" size={20} /> : activeAdega.emoji}
+                {isGlobal ? <BarChart3 className="text-brand-wine" size={20} /> : isHistoryReport ? <History className="text-brand-wine" size={20} /> : activeAdega.emoji}
              </div>
              <div className="min-w-0">
                <h2 className="text-xl sm:text-2xl font-serif italic text-text-main font-bold truncate">
-                 {isGlobal ? 'Estatísticas Globais' : activeAdega.name}
+                 {reportTitle}
                </h2>
                <p className="text-[8px] sm:text-[10px] text-text-sub font-sans font-bold uppercase tracking-widest mt-0.5 truncate">
-                 {isGlobal ? 'Visão Geral do Acervo' : `Relatório de ${context?.mode === 'wines' ? 'Vinhos' : 'Spirits'}`}
+                 {reportSubtitle}
                </p>
              </div>
           </div>
